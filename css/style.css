@@ -435,3 +435,49 @@ font-weight:500;
 font-size:14px;
 
 }
+
+.love-letter{
+
+max-width:600px;
+
+margin:80px auto 0 auto;
+
+padding:30px;
+
+background:rgba(255,255,255,0.05);
+
+border-radius:15px;
+
+backdrop-filter:blur(10px);
+
+opacity:0;
+
+transform:translateY(20px);
+
+transition:all 0.8s ease;
+
+}
+
+.love-letter.show{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+.love-letter h3{
+
+margin-bottom:20px;
+
+color:#ec4899;
+
+}
+
+#letterText{
+
+line-height:1.7;
+
+font-size:18px;
+
+}

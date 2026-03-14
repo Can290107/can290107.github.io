@@ -102,7 +102,11 @@ navigator.vibrate(200);
 }
 
 },200);
+setTimeout(() => {
 
+startLetter();
+
+},1200);
 }
 
 
@@ -147,3 +151,49 @@ document.getElementById("daysRelationship").textContent =
 diffRelationship + " Tage zusammen ❤️";
 
 });
+/* ---------------- Liebesbrief Animation ---------------- */
+
+function startLetter(){
+
+const letter = document.getElementById("loveLetter");
+const textElement = document.getElementById("letterText");
+
+const text = `
+Hey ❤️
+
+Ich wollte dir dieses Jahr nicht einfach nur ein Geschenk geben.
+Ich wollte dir etwas geben, das zeigt wie viel mir unsere Zeit bedeutet.
+
+Vom ersten Moment unserer Nachrichten,
+über unser erstes Treffen im Park,
+bis zu all den Momenten danach.
+
+Jeder einzelne Moment mit dir ist für mich etwas Besonderes.
+
+Danke, dass du mein Leben so viel schöner machst.
+
+Alles Gute zum Geburtstag ❤️
+Ich liebe dich.
+`;
+
+letter.classList.add("show");
+
+let i = 0;
+
+function type(){
+
+if(i < text.length){
+
+textElement.innerHTML += text.charAt(i);
+
+i++;
+
+setTimeout(type,40);
+
+}
+
+}
+
+type();
+
+}
