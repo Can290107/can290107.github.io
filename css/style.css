@@ -1,0 +1,398 @@
+html{
+scroll-behavior:smooth;
+}
+
+body{
+
+margin:0;
+padding:0;
+
+font-family:'Poppins', sans-serif;
+
+background:#0f172a;
+color:white;
+
+min-height:100vh;
+
+display:flex;
+flex-direction:column;
+
+align-items:center;
+
+text-align:center;
+
+}
+
+/* Container */
+
+.container{
+
+max-width:700px;
+padding:20px;
+
+}
+
+/* Überschrift */
+
+h1{
+
+font-size:clamp(2rem, 6vw, 3rem);
+margin-bottom:20px;
+
+}
+
+h2{
+
+font-size:2rem;
+margin-bottom:20px;
+
+}
+
+/* Text */
+
+p{
+
+font-size:18px;
+
+}
+
+/* Buttons */
+
+button{
+
+margin-top:30px;
+padding:18px 35px;
+
+font-size:18px;
+
+border:none;
+border-radius:10px;
+
+background:#ec4899;
+color:white;
+
+cursor:pointer;
+
+transition:all 0.3s ease;
+
+}
+
+button:hover{
+
+transform:scale(1.1);
+
+box-shadow:0 0 25px rgba(236,72,153,0.7);
+
+}
+
+/* Sections */
+
+section{
+
+max-width:800px;
+
+margin:180px auto;
+
+padding:40px;
+
+text-align:center;
+
+background:rgba(255,255,255,0.03);
+
+border-radius:15px;
+
+backdrop-filter:blur(5px);
+
+}
+
+/* Partikel Hintergrund */
+
+#particles{
+
+position:fixed;
+
+width:100%;
+height:100%;
+
+top:0;
+left:0;
+
+z-index:-1;
+
+}
+
+/* Custom Cursor */
+
+.cursor{
+
+width:20px;
+height:20px;
+
+background:#ec4899;
+
+border-radius:50%;
+
+position:fixed;
+
+pointer-events:none;
+
+transform:translate(-50%,-50%);
+
+z-index:999;
+
+box-shadow:0 0 20px #ec4899;
+
+}
+
+/* Cursor auf Touch Geräten ausblenden */
+
+@media (hover: none) {
+
+.cursor{
+display:none;
+}
+
+}
+
+.gift-box{
+
+width:200px;
+height:200px;
+
+margin:120px auto 50px auto;   /* mehr Abstand nach oben */
+
+position:relative;
+
+display:none;
+
+}
+
+.gift-body{
+
+width:200px;
+height:200px;
+
+background:#ec4899;
+
+border-radius:10px;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+}
+
+.gift-lid{
+
+width:220px;
+height:40px;
+
+background:#db2777;
+
+position:absolute;
+
+top:-30px;
+left:-10px;
+
+border-radius:5px;
+
+transition:transform 1s ease;
+
+}
+
+.gift-box.open .gift-lid{
+
+transform:translateY(-80px) rotate(-10deg);
+
+
+}
+
+
+.gift-text{
+
+opacity:0;
+
+padding:20px;
+
+transition:opacity 1s ease;
+
+}
+
+.gift-box.open .gift-text{
+
+opacity:1;
+
+}
+
+/* ---------------- Timeline ---------------- */
+
+.timeline-section{
+max-width:900px;
+margin:200px auto;
+}
+
+.timeline-intro{
+opacity:0.8;
+margin-bottom:60px;
+}
+
+/* Timeline Container */
+
+.timeline{
+
+position:relative;
+
+display:flex;
+flex-direction:column;
+
+gap:60px;
+
+margin-top:80px;
+
+padding-left:40px;
+
+}
+
+/* Hauptlinie */
+
+.timeline::before{
+
+content:"";
+
+position:absolute;
+
+left:10px;
+top:0;
+
+width:3px;
+height:100%;
+
+background:#ec4899;
+
+}
+
+/* Event Karte */
+
+.timeline-event{
+
+position:relative;
+
+cursor:pointer;
+
+background:rgba(255,255,255,0.05);
+
+padding:20px;
+
+border-radius:12px;
+
+transition:all 0.4s ease;
+
+}
+
+/* Hover Effekt */
+
+.timeline-event:hover{
+
+transform:translateX(10px);
+
+}
+
+/* Punkt */
+
+.timeline-event::before{
+
+content:"";
+
+position:absolute;
+
+left:-33px;
+top:18px;
+
+width:16px;
+height:16px;
+
+background:#ec4899;
+
+border-radius:50%;
+
+box-shadow:0 0 10px #ec4899;
+
+transition:0.3s;
+
+}
+
+/* Aktiver Moment */
+
+.timeline-event.active{
+
+transform:scale(1.05);
+
+background:rgba(255,255,255,0.08);
+
+}
+
+/* Aktiver Punkt */
+
+.timeline-event.active::before{
+
+transform:scale(1.6);
+
+box-shadow:0 0 25px #ec4899;
+
+}
+
+/* Datum */
+
+.timeline-date{
+
+font-weight:600;
+
+color:#ec4899;
+
+font-size:16px;
+
+}
+
+/* Detailtext (anfangs versteckt) */
+
+.timeline-detail{
+
+max-height:0;
+
+overflow:hidden;
+
+opacity:0;
+
+transform:translateY(-10px);
+
+transition:all 0.4s ease;
+
+}
+
+/* Detailtext sichtbar */
+
+.timeline-event.active .timeline-detail{
+
+max-height:400px;
+
+margin-top:15px;
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+/* Mobile Anpassung */
+
+@media (max-width:600px){
+
+.timeline{
+padding-left:30px;
+}
+
+.timeline-event::before{
+left:-27px;
+}
+
+}
