@@ -17,7 +17,18 @@
 </head>
 
 <body>
-    
+    <div id="loginScreen" class="login-screen">
+
+<h2>🔒 Private Seite</h2>
+
+<p>Gib das Datum ein, an dem unsere Geschichte begann</p>
+
+<input type="password" id="passwordInput" placeholder="TT.MM.JJJJ">
+
+<button onclick="checkPassword()">Öffnen</button>
+
+</div>
+<div id="mainContent" style="display:none;">
 <div class="relationship-counter">
 
 <p id="daysTogether"></p>
@@ -209,6 +220,6 @@ Starten 🎉
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 
 <script src="js/script.js"></script>
-
+</div>
 </body>
 </html>

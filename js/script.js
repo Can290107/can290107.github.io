@@ -160,3 +160,22 @@ setTimeout(type,40);
 type();
 
 }
+
+function checkPassword(){
+
+const password = document.getElementById("passwordInput").value;
+
+const correctPassword = "15.04.2025";
+
+if(password === correctPassword){
+
+document.getElementById("loginScreen").style.display = "none";
+document.getElementById("mainContent").style.display = "block";
+
+}else{
+
+alert("Das stimmt leider nicht ❤️");
+
+}
+
+}
