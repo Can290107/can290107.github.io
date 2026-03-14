@@ -128,30 +128,22 @@ block:"center"
 });
 
 
-
-detail.innerHTML = content;
-
-detail.classList.add("show");
-
-detail.scrollIntoView({
-behavior:"smooth"
-});
-
-
 /* ---------------- Beziehungs Counter ---------------- */
+
+document.addEventListener("DOMContentLoaded", () => {
 
 const startDate = new Date("2025-04-15");
 const relationshipDate = new Date("2025-06-21");
 
 const today = new Date();
 
-const diffStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
-const diffRelationship = Math.floor((today - relationshipDate) / (1000 * 60 * 60 * 24));
+const diffStart = Math.floor((today - startDate) / (1000*60*60*24));
+const diffRelationship = Math.floor((today - relationshipDate) / (1000*60*60*24));
 
-document.getElementById("daysTogether").innerText =
+document.getElementById("daysTogether").textContent =
 diffStart + " Tage seit unserer ersten Nachricht";
 
-document.getElementById("daysRelationship").innerText =
+document.getElementById("daysRelationship").textContent =
 diffRelationship + " Tage zusammen ❤️";
 
-
+});
