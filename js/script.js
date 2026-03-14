@@ -62,53 +62,6 @@ speed:2
 });
 
 
-/* ---------------- Geschenk öffnen ---------------- */
-
-function openGift(){
-
-const box = document.getElementById("giftBox");
-
-box.style.display = "block";
-
-setTimeout(() => {
-
-box.classList.add("open");
-
-// Position der Box bestimmen
-const rect = box.getBoundingClientRect();
-
-const x = (rect.left + rect.width / 2) / window.innerWidth;
-const y = (rect.top + rect.height / 3) / window.innerHeight;
-
-
-// Konfetti Explosion
-confetti({
-particleCount:300,
-spread:160,
-startVelocity:40,
-origin:{ x:x, y:y }
-});
-
-confetti({
-particleCount:80,
-spread:100,
-colors:['#ec4899','#ff6aa2','#ffffff'],
-origin:{ x:x, y:y }
-});
-
-// Handy Vibration
-if (navigator.vibrate) {
-navigator.vibrate(200);
-}
-
-},200);
-setTimeout(() => {
-
-startLetter();
-
-},1200);
-}
-
 
 /* ---------------- Timeline Zoom ---------------- */
 
@@ -153,13 +106,21 @@ diffRelationship + " Tage zusammen ❤️";
 });
 /* ---------------- Liebesbrief Animation ---------------- */
 
-function startLetter(){
+/* ---------------- Liebesbrief Animation ---------------- */
+
+function showLetter(){
+
+// Konfetti
+confetti({
+particleCount:200,
+spread:120,
+origin:{y:0.6}
+});
 
 const letter = document.getElementById("loveLetter");
 const textElement = document.getElementById("letterText");
 
-const text = `
-Hey ❤️
+const text = `Hey ❤️
 
 Ich wollte dir dieses Jahr nicht einfach nur ein Geschenk geben.
 Ich wollte dir etwas geben, das zeigt wie viel mir unsere Zeit bedeutet.
@@ -177,6 +138,8 @@ Ich liebe dich.
 `;
 
 letter.classList.add("show");
+
+textElement.innerHTML = "";
 
 let i = 0;
 
