@@ -397,19 +397,41 @@ left:-27px;
 
 }
 
-.counter-section{
+/* ---------------- Relationship Counter ---------------- */
 
-margin:120px auto;
+.relationship-counter{
 
-font-size:20px;
+position:fixed;
+
+top:20px;
+right:20px;
+
+background:rgba(15,23,42,0.85);
+
+backdrop-filter:blur(10px);
+
+padding:12px 18px;
+
+border-radius:12px;
+
+font-size:14px;
+
+text-align:right;
+
+box-shadow:0 0 20px rgba(236,72,153,0.4);
+
+z-index:9999;
 
 }
 
-.counter-section p{
+.relationship-counter p{
 
-font-size:22px;
-margin-top:10px;
+margin:2px 0;
 
 color:#ec4899;
+
+font-weight:500;
+
+font-size:14px;
 
 }
