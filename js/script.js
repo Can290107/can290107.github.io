@@ -191,18 +191,22 @@ type();
 
 }
 
-/*---------Login---------*/
-function checkPassword(){
 
-const password = document.getElementById("passwordInput").value;
 
-const correctPassword = "15.04.2025";
+/*---------Login Button Event---------*/
 
 const loginBtn = document.getElementById("loginBtn");
 
 if(loginBtn){
 loginBtn.addEventListener("click", checkPassword);
 }
+
+/*---------Login---------*/
+function checkPassword(){
+
+const password = document.getElementById("passwordInput").value;
+
+const correctPassword = "15.04.2025";
 
 if(password === correctPassword){
 
