@@ -152,6 +152,10 @@ box-shadow:0 0 20px #ec4899;
 display:none;
 }
 
+body{
+cursor:auto;
+}
+
 }
 
 .gift-box{
@@ -267,7 +271,13 @@ top:0;
 width:3px;
 height:100%;
 
-background:#ec4899;
+background:linear-gradient(
+to bottom,
+transparent,
+#ec4899,
+#ec4899,
+transparent
+);
 
 }
 
@@ -293,7 +303,9 @@ transition:all 0.4s ease;
 
 .timeline-event:hover{
 
-transform:translateX(10px);
+transform:translateX(10px) scale(1.02);
+
+box-shadow:0 0 25px rgba(236,72,153,0.3);
 
 }
 
@@ -525,5 +537,30 @@ font-size:16px;
 .login-screen button{
 
 margin-top:20px;
+
+}
+
+.heart{
+
+position:fixed;
+font-size:20px;
+
+pointer-events:none;
+
+animation:floatHeart 4s linear forwards;
+
+}
+
+@keyframes floatHeart{
+
+0%{
+transform:translateY(0) scale(0.8);
+opacity:1;
+}
+
+100%{
+transform:translateY(-200px) scale(1.4);
+opacity:0;
+}
 
 }

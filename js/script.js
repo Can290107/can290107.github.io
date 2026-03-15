@@ -9,10 +9,22 @@ const cursor = document.querySelector(".cursor");
 
 button.addEventListener("click", () => {
 
-music.volume = 1;
+music.volume = 0;
 music.play();
 
-// Button ausblenden
+let volume = 0;
+
+const fade = setInterval(() => {
+
+if(volume < 1){
+volume += 0.02;
+music.volume = volume;
+}else{
+clearInterval(fade);
+}
+
+}, 100);
+
 button.style.display = "none";
 
 });
@@ -28,13 +40,16 @@ once:true
 
 /* ---------------- Custom Cursor ---------------- */
 
-document.addEventListener("mousemove", (e) => {
+if(cursor){
+
+document.addEventListener("mousemove",(e)=>{
 
 cursor.style.left = e.clientX + "px";
 cursor.style.top = e.clientY + "px";
 
 });
 
+}
 
 /* ---------------- Partikel Hintergrund ---------------- */
 
@@ -104,7 +119,7 @@ document.getElementById("daysRelationship").textContent =
 diffRelationship + " Tage zusammen ❤️";
 
 });
-/* ---------------- Liebesbrief Animation ---------------- */
+
 
 /* ---------------- Liebesbrief Animation ---------------- */
 
@@ -161,6 +176,7 @@ type();
 
 }
 
+/*---------Login---------*/
 function checkPassword(){
 
 const password = document.getElementById("passwordInput").value;
@@ -172,6 +188,16 @@ if(password === correctPassword){
 document.getElementById("loginScreen").style.display = "none";
 document.getElementById("mainContent").style.display = "block";
 
+setTimeout(()=>{
+
+confetti({
+particleCount:300,
+spread:180,
+origin:{y:0.6}
+});
+
+},600);
+
 }else{
 
 alert("Das stimmt leider nicht ❤️");
@@ -179,3 +205,31 @@ alert("Das stimmt leider nicht ❤️");
 }
 
 }
+
+/*----------Hereffekt beim Klicken-------------*/
+document.getElementById("passwordInput")
+.addEventListener("keypress", function(e){
+
+if(e.key === "Enter"){
+checkPassword();
+}
+
+});
+
+document.addEventListener("click",(e)=>{
+
+const heart = document.createElement("div");
+
+heart.classList.add("heart");
+heart.innerHTML = "❤️";
+
+heart.style.left = e.clientX + "px";
+heart.style.top = e.clientY + "px";
+
+document.body.appendChild(heart);
+
+setTimeout(()=>{
+heart.remove();
+},4000);
+
+});
