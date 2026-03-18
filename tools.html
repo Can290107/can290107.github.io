@@ -43,7 +43,41 @@
   </div>
 </section>
 
-<script src="js/script.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc } 
+from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyGJQTZGjNqoHsjcEJ1W1DHryoXS-xpeOuVI",
+  authDomain: "geburtstag-seite.firebaseapp.com",
+  projectId: "geburtstag-seite",
+  storageBucket: "geburtstag-seite.firebasestorage.app",
+  messagingSenderId: "825693028407",
+  appId: "1:825693028407:web:55ebde2398f2f9cc907fb2"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// GLOBAL machen
+window.db = db;
+window.firebaseFns = {
+  collection,
+  addDoc,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  updateDoc,
+  setDoc
+};
+
+// 👉 WICHTIG: script.js ERST NACH Firebase laden
+const script = document.createElement("script");
+script.src = "js/script.js";
+document.body.appendChild(script);
+
+</script>
 
 </body>
 </html>

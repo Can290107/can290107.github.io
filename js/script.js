@@ -1,8 +1,13 @@
-
-
-
-
-
+const db = window.db;
+const {
+  collection,
+  addDoc,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  updateDoc,
+  setDoc
+} = window.firebaseFns;
 
 /* ---------------- Elemente ---------------- */
 
@@ -260,3 +265,65 @@ function openTools(){
 function goBack(){
   window.location.href = "index.html";
 }
+
+function loadTodos() {
+
+  onSnapshot(collection(db, "todos"), (snapshot) => {
+
+    const list = document.getElementById("todoList");
+    list.innerHTML = "";
+
+    snapshot.forEach((docItem) => {
+
+      const todo = docItem.data();
+
+      const li = document.createElement("li");
+      li.classList.add("todo-item");
+
+      if (todo.done) li.classList.add("done");
+
+      li.innerHTML = `
+        <span onclick="toggleTodo('${docItem.id}', ${todo.done})">${todo.text}</span>
+        <button onclick="deleteTodo('${docItem.id}')">❌</button>
+      `;
+
+      list.appendChild(li);
+    });
+
+  });
+
+}
+
+function addTodo() {
+
+  const input = document.getElementById("todoInput");
+
+  if (!input.value.trim()) return;
+
+  addDoc(collection(db, "todos"), {
+    text: input.value,
+    done: false
+  });
+
+  input.value = "";
+}
+
+function toggleTodo(id, currentState) {
+
+  updateDoc(doc(db, "todos", id), {
+    done: !currentState
+  });
+
+}
+
+function deleteTodo(id) {
+
+  deleteDoc(doc(db, "todos", id));
+
+}
+
+
+window.addTodo = addTodo;
+window.toggleTodo = toggleTodo;
+window.deleteTodo = deleteTodo;
+window.changeMonth = changeMonth;
