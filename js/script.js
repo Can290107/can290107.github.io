@@ -1,14 +1,19 @@
-const db = window.db;
-const {
-  collection,
-  addDoc,
-  onSnapshot,
-  deleteDoc,
-  doc,
-  updateDoc,
-  setDoc
-} = window.firebaseFns;
+let db;
+let collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc;
 
+if(window.firebaseFns){
+  db = window.db;
+
+  ({
+    collection,
+    addDoc,
+    onSnapshot,
+    deleteDoc,
+    doc,
+    updateDoc,
+    setDoc
+  } = window.firebaseFns);
+}
 /* ---------------- Elemente ---------------- */
 
 const button = document.getElementById("startBtn");
