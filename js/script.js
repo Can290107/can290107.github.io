@@ -251,3 +251,12 @@ heart.remove();
 },4000);
 
 });
+
+/*------Kalender----*/
+function openTools(){
+  window.location.href = "tools.html";
+}
+
+function goBack(){
+  window.location.href = "index.html";
+}

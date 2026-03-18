@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Unsere Tools ❤️</title>
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+<h1>Unsere kleinen Tools ❤️</h1>
+
+<!-- Zurück Button -->
+<button onclick="goBack()">⬅ Zurück</button>
+
+<!-- Kalender -->
+<section>
+  <h2>Kalender 📅</h2>
+
+  <div class="calendar">
+    <div class="calendar-header">
+      <button onclick="changeMonth(-1)">⬅️</button>
+      <h3 id="calendarTitle"></h3>
+      <button onclick="changeMonth(1)">➡️</button>
+    </div>
+
+    <div class="calendar-grid" id="calendarGrid"></div>
+  </div>
+</section>
+
+<!-- ToDo -->
+<section>
+  <h2>Unsere Liste ❤️</h2>
+
+  <div class="todo-container">
+    <input type="text" id="todoInput" placeholder="Neue Idee...">
+    <button onclick="addTodo()">Hinzufügen</button>
+
+    <ul id="todoList"></ul>
+  </div>
+</section>
+
+<script src="js/script.js"></script>
+
+</body>
+</html>
