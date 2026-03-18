@@ -13,11 +13,9 @@ const {
 
 const button = document.getElementById("startBtn");
 const music = document.getElementById("bgMusic");
-const cursor = document.querySelector(".cursor");
-
 
 /* ---------------- Musik starten ---------------- */
-
+if(button && music){
 button.addEventListener("click", () => {
 
 music.volume = 0;
@@ -39,14 +37,19 @@ clearInterval(fade);
 button.style.display = "none";
 
 });
+}
+const cursor = document.querySelector(".cursor");
+
 
 
 /* ---------------- Scroll Animation ---------------- */
 
+if(typeof AOS !== "undefined"){
 AOS.init({
 duration:1000,
 once:true
 });
+}
 
 
 /* ---------------- Custom Cursor ---------------- */
@@ -64,28 +67,21 @@ cursor.style.top = e.clientY + "px";
 
 /* ---------------- Partikel Hintergrund ---------------- */
 
+if(typeof tsParticles !== "undefined"){
 tsParticles.load("particles", {
-
 particles:{
-
 number:{ value:60 },
-
 color:{ value:"#ec4899" },
-
 shape:{ type:"circle" },
-
 opacity:{ value:0.5 },
-
 size:{ value:3 },
-
 move:{
 enable:true,
 speed:2
 }
-
 }
-
 });
+}
 
 
 
@@ -328,3 +324,6 @@ window.toggleTodo = toggleTodo;
 window.deleteTodo = deleteTodo;
 window.changeMonth = changeMonth;
 window.goBack = goBack;
+if(document.getElementById("todoList")){
+  loadTodos();
+}
