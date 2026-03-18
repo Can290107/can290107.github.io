@@ -1,7 +1,13 @@
-let db = null;
+let db;
 let collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc;
 
-if (window.firebaseFns && window.db) {
+// 🔥 Warten bis Firebase da ist
+function initFirebase() {
+  if (!window.firebaseFns || !window.db) {
+    setTimeout(initFirebase, 100);
+    return;
+  }
+
   db = window.db;
 
   collection = window.firebaseFns.collection;
@@ -11,7 +17,20 @@ if (window.firebaseFns && window.db) {
   doc = window.firebaseFns.doc;
   updateDoc = window.firebaseFns.updateDoc;
   setDoc = window.firebaseFns.setDoc;
+
+  console.log("Firebase ready ✅");
+
+  // 👉 Jetzt erst starten
+  if(document.getElementById("todoList")){
+    loadTodos();
+  }
+
+  if(document.getElementById("calendarGrid")){
+    loadEvents();
+  }
 }
+
+initFirebase();
 /* ---------------- Elemente ---------------- */
 
 const button = document.getElementById("startBtn");
@@ -405,11 +424,4 @@ window.addTodo = addTodo;
 window.toggleTodo = toggleTodo;
 window.deleteTodo = deleteTodo;
 window.changeMonth = changeMonth;
-// Kalender starten
-if(document.getElementById("calendarGrid")){
-  loadEvents();
-}
 window.goBack = goBack;
-if(document.getElementById("todoList")){
-  loadTodos();
-}

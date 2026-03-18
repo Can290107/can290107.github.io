@@ -72,9 +72,21 @@ window.firebaseFns = {
   setDoc
 };
 
-// 👉 WICHTIG: script.js ERST NACH Firebase laden
 const script = document.createElement("script");
 script.src = "js/script.js";
+
+script.onload = () => {
+  console.log("Script geladen ✅");
+
+  if(window.loadTodos){
+    loadTodos();
+  }
+
+  if(window.loadEvents){
+    loadEvents();
+  }
+};
+
 document.body.appendChild(script);
 
 </script>
