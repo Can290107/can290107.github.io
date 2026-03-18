@@ -120,19 +120,27 @@ box-shadow:0 0 25px rgba(236,72,153,0.7);
 
 section{
 
-  width:100%;
-  max-width:800px;
-  margin:80px auto;
-  padding:25px 15px;
+max-width:800px;
 
+margin:180px auto;
+
+padding:40px;
 
 text-align:center;
 
-background:rgba(255,255,255,0.03);
+background:rgba(255,255,255,0.04);
 
-border-radius:15px;
+border-radius:20px;
 
-backdrop-filter:blur(5px);
+backdrop-filter:blur(10px);
+
+border:1px solid rgba(255,255,255,0.08);
+
+box-shadow:
+0 10px 40px rgba(0,0,0,0.4),
+0 0 30px rgba(236,72,153,0.05);
+
+transition:all 0.4s ease;
 
 }
 
