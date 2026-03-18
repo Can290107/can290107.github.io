@@ -11,7 +11,7 @@ const {
 
 /* ---------------- Elemente ---------------- */
 
-const button = document.getElementById("startBtn");
+document.addEventListener("DOMContentLoaded", () => {
 const music = document.getElementById("bgMusic");
 const cursor = document.querySelector(".cursor");
 
@@ -327,3 +327,6 @@ window.addTodo = addTodo;
 window.toggleTodo = toggleTodo;
 window.deleteTodo = deleteTodo;
 window.changeMonth = changeMonth;
+window.goBack = goBack;
+
+});
