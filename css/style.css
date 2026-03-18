@@ -264,7 +264,6 @@ opacity:1;
 .timeline-section{
 max-width:900px;
 margin:200px auto;
-overflow:hidden;
 }
 
 .timeline-intro{
@@ -277,7 +276,6 @@ margin-bottom:60px;
 .timeline{
 
 position:relative;
-overflow:hidden;
 
 display:flex;
 flex-direction:column;
@@ -286,7 +284,7 @@ gap:60px;
 
 margin-top:80px;
 
-padding-left:20px;
+padding-left:40px;
 
 }
 
@@ -298,8 +296,7 @@ content:"";
 
 position:absolute;
 
-left:5px; 
-max-height:100%;
+left:10px;
 top:0;
 
 width:3px;
@@ -331,6 +328,12 @@ border-radius:12px;
 
 transition:all 0.4s ease;
 
+border:1px solid rgba(255,255,255,0.05);
+
+backdrop-filter:blur(8px);
+
+will-change:transform;
+
 }
 
 /* Hover Effekt */
@@ -339,7 +342,9 @@ transition:all 0.4s ease;
 
 transform:translateX(10px) scale(1.02);
 
-box-shadow:0 0 25px rgba(236,72,153,0.3);
+box-shadow:
+0 10px 30px rgba(0,0,0,0.3),
+0 0 25px rgba(236,72,153,0.2);
 
 }
 
@@ -363,7 +368,7 @@ border-radius:50%;
 
 box-shadow:0 0 10px #ec4899;
 
-transition:0.3s;
+transition:all 0.3s ease;
 
 }
 
@@ -375,6 +380,8 @@ transform:scale(1.05);
 
 background:rgba(255,255,255,0.08);
 
+box-shadow:0 0 30px rgba(236,72,153,0.3);
+
 }
 
 /* Aktiver Punkt */
@@ -383,7 +390,9 @@ background:rgba(255,255,255,0.08);
 
 transform:scale(1.6);
 
-box-shadow:0 0 25px #ec4899;
+box-shadow:
+0 0 25px #ec4899,
+0 0 50px rgba(236,72,153,0.5);
 
 }
 
@@ -411,7 +420,10 @@ opacity:0;
 
 transform:translateY(-10px);
 
-transition:all 0.4s ease;
+transition:
+max-height 0.5s ease,
+opacity 0.4s ease,
+transform 0.4s ease;
 
 }
 
@@ -434,11 +446,22 @@ transform:translateY(0);
 @media (max-width:600px){
 
 .timeline{
-padding-left:30px;
+padding-left:25px;
+gap:40px;
+}
+
+.timeline-event{
+padding:15px;
 }
 
 .timeline-event::before{
-left:-27px;
+left:-22px;
+width:12px;
+height:12px;
+}
+
+.timeline-date{
+font-size:14px;
 }
 
 }
