@@ -328,8 +328,8 @@ position:relative;
 
 cursor:pointer;
 
-/* Fallback für iPhone */
-background:rgba(15,23,42,0.85);
+/* WICHTIG: kein rgba weiß mehr */
+background:#1e293b;
 
 padding:20px;
 
@@ -338,10 +338,6 @@ border-radius:12px;
 transition:all 0.4s ease;
 
 border:1px solid rgba(255,255,255,0.05);
-
-/* Blur nur wenn unterstützt */
-backdrop-filter:blur(8px);
--webkit-backdrop-filter:blur(8px);
 
 }
 
