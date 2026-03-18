@@ -481,15 +481,17 @@ padding:8px 12px;
 .relationship-counter{
   position:fixed;
 
-  bottom:20px;          /* 👈 nur unten */
-  left:50%;             /* 👈 mittig */
+  bottom:20px;
+  left:50%;
   transform:translateX(-50%);
 
-  max-width:90%;
-  width:auto;
+  width:fit-content;       /* 🔥 WICHTIG */
+  max-width:90vw;
+
+  display:inline-block;    /* 🔥 verhindert Strecken */
 
   font-size:12px;
-  padding:10px 14px;
+  padding:10px 16px;
 
   background:rgba(15,23,42,0.9);
   backdrop-filter:blur(10px);
@@ -501,6 +503,7 @@ padding:8px 12px;
   box-shadow:0 0 20px rgba(236,72,153,0.4);
 
   z-index:999;
+  white-space:nowrap;
 }
 
 .relationship-counter p{
