@@ -269,182 +269,112 @@ opacity:1;
 
 /* ---------------- Timeline ---------------- */
 
-.timeline-section{
-max-width:900px;
-margin:200px auto;
+.timeline-section {
+  max-width: 900px;
+  margin: 200px auto;
 }
 
-.timeline-intro{
-opacity:0.8;
-margin-bottom:60px;
+.timeline-intro {
+  opacity: 0.8;
+  margin-bottom: 60px;
 }
 
 /* Timeline Container */
 
-.timeline{
-
-position:relative;
-
-display:flex;
-flex-direction:column;
-
-gap:60px;
-
-margin-top:80px;
-
-padding-left:40px;
-
+.timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  margin-top: 80px;
+  padding-left: 40px;
 }
 
 /* Hauptlinie */
 
-.timeline::before{
-
-content:"";
-
-position:absolute;
-
-left:10px;
-top:0;
-
-width:3px;
-height:100%;
-
-background:linear-gradient(
-to bottom,
-transparent,
-#ec4899,
-#ec4899,
-transparent
-);
-
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: #ec4899;
 }
 
 /* Event Karte */
 
-.timeline-event{
-
-position:relative;
-
-cursor:pointer;
-
-/* WICHTIG: kein rgba weiß mehr */
-background:#1e293b;
-
-padding:20px;
-
-border-radius:12px;
-
-transition:all 0.4s ease;
-
-border:1px solid rgba(255,255,255,0.05);
-
+.timeline-event {
+  position: relative;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 20px;
+  border-radius: 12px;
+  transition: all 0.4s ease;
 }
 
 /* Hover Effekt */
 
-.timeline-event:hover{
-
-transform:translateX(10px) scale(1.02);
-
-box-shadow:
-0 10px 30px rgba(0,0,0,0.3),
-0 0 25px rgba(236,72,153,0.2);
-
+.timeline-event:hover {
+  transform: translateX(10px);
 }
 
 /* Punkt */
 
-.timeline-event::before{
-
-content:"";
-
-position:absolute;
-
-left:-33px;
-top:18px;
-
-width:16px;
-height:16px;
-
-background:#ec4899;
-
-border-radius:50%;
-
-box-shadow:0 0 10px #ec4899;
-
-transition:all 0.3s ease;
-
+.timeline-event::before {
+  content: "";
+  position: absolute;
+  left: -33px;
+  top: 18px;
+  width: 16px;
+  height: 16px;
+  background: #ec4899;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ec4899;
+  transition: 0.3s;
 }
 
 /* Aktiver Moment */
 
-.timeline-event.active{
-
-transform:scale(1.05);
-
-background:rgba(255,255,255,0.08);
-
-box-shadow:0 0 30px rgba(236,72,153,0.3);
-
+.timeline-event.active {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* Aktiver Punkt */
 
-.timeline-event.active::before{
-
-transform:scale(1.6);
-
-box-shadow:
-0 0 25px #ec4899,
-0 0 50px rgba(236,72,153,0.5);
-
+.timeline-event.active::before {
+  transform: scale(1.6);
+  box-shadow: 0 0 25px #ec4899;
 }
 
 /* Datum */
 
-.timeline-date{
-
-font-weight:600;
-
-color:#ec4899;
-
-font-size:16px;
-
+.timeline-date {
+  font-weight: 600;
+  color: #ec4899;
+  font-size: 16px;
 }
 
 /* Detailtext (anfangs versteckt) */
 
-.timeline-detail{
-
-max-height:0;
-
-overflow:hidden;
-
-opacity:0;
-
-transform:translateY(-10px);
-
-transition:
-max-height 0.5s ease,
-opacity 0.4s ease,
-transform 0.4s ease;
-
+.timeline-detail {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.4s ease;
 }
 
 /* Detailtext sichtbar */
 
-.timeline-event.active .timeline-detail{
-
-max-height:400px;
-
-margin-top:15px;
-
-opacity:1;
-
-transform:translateY(0);
-
+.timeline-event.active .timeline-detail {
+  max-height: 400px;
+  margin-top: 15px;
+  opacity: 1;
+  transform: translateY(0);
 }
+
 
 /* Mobile Anpassung */
 
