@@ -1,3 +1,5 @@
+let currentEventKey = null;
+
 let db;
 let collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc;
 
@@ -357,7 +359,34 @@ function deleteTodo(id) {
 /* ---------------- Kalender ---------------- */
 
 let currentDate = new Date();
+function openPopup(text, key){
+  document.getElementById("eventPopup").classList.remove("hidden");
+  document.getElementById("eventText").textContent = text;
 
+  currentEventKey = key;
+}
+
+function closePopup(){
+  document.getElementById("eventPopup").classList.add("hidden");
+}
+document.getElementById("deleteEventBtn").onclick = () => {
+  if(!db || !currentEventKey) return;
+
+  deleteDoc(doc(db, "events", currentEventKey));
+  closePopup();
+};
+
+document.getElementById("editEventBtn").onclick = () => {
+  const newText = prompt("Neuer Text:");
+
+  if(newText && newText.trim() !== ""){
+    setDoc(doc(db, "events", currentEventKey), {
+      text: newText
+    });
+  }
+
+  closePopup();
+};
 function renderCalendar(events = {}) {
 
   const grid = document.getElementById("calendarGrid");
@@ -415,29 +444,11 @@ function renderCalendar(events = {}) {
 
   if(!db) return;
 
-  // 👉 Wenn schon Event existiert
+  // 👉 Wenn Event existiert → Popup öffnen
   if(hasEvent){
-
-    const action = prompt(
-      `Event:\n"${hasEvent}"\n\n✏️ Neu eingeben zum ändern\n❌ "löschen" eingeben zum entfernen`
-    );
-
-    if(action === null) return;
-
-    if(action.toLowerCase() === "löschen"){
-      deleteDoc(doc(db, "events", key));
-      return;
-    }
-
-    if(action.trim() !== ""){
-      setDoc(doc(db, "events", key), {
-        text: action
-      });
-    }
-
+    openPopup(hasEvent, key);
   } 
   else {
-    // 👉 Neues Event
     const text = prompt("Was wollen wir an diesem Tag machen? ❤️");
 
     if(text){

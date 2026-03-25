@@ -92,6 +92,16 @@ script.onload = () => {
 document.body.appendChild(script);
 
 </script>
+<div id="eventPopup" class="event-popup hidden">
+  <div class="event-box">
+    <p id="eventText"></p>
 
+    <div class="event-actions">
+      <button id="editEventBtn">Bearbeiten</button>
+      <button id="deleteEventBtn">Löschen</button>
+      <button onclick="closePopup()">Schließen</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
