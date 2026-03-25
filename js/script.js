@@ -353,7 +353,7 @@ function renderCalendar(events = {}) {
   if(!grid || !title) return;
 
   // 🔥 Smooth Animation Start
-  grid.style.opacity = 0.3;
+  //grid.style.opacity = 0.3;
 
   grid.innerHTML = "";
 
@@ -415,9 +415,9 @@ function renderCalendar(events = {}) {
   }
 
   // 🔥 Smooth Animation Ende
-  requestAnimationFrame(() => {
-  grid.style.opacity = 1;
-  });
+  //requestAnimationFrame(() => {
+  //grid.style.opacity = 1;
+ // });
 }
 
 function changeMonth(direction){
