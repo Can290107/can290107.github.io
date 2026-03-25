@@ -110,13 +110,13 @@ speed:2
 
 /* ---------------- Timeline Zoom ---------------- */
 
-const events = document.querySelectorAll(".timeline-event");
+const timelineEvents = document.querySelectorAll(".timeline-event");
 
-events.forEach(event => {
+timelineEvents.forEach(event => {
 
 event.addEventListener("click", () => {
 
-events.forEach(e => e.classList.remove("active"));
+timelineEvents.forEach(e => e.classList.remove("active"));
 
 event.classList.add("active");
 
