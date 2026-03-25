@@ -30,6 +30,7 @@ align-items:center;
 
 text-align:center;
 overflow-x: hidden;
+width:100vw;
 
 }
 
@@ -89,7 +90,7 @@ max-width:100%;
 
 button:hover{
 
-transform:scale(1.1);
+transform:scale(1.05);
 
 box-shadow:0 0 25px rgba(236,72,153,0.7);
 
@@ -287,7 +288,7 @@ opacity:1;
   flex-direction: column;
   gap: 60px;
   margin-top: 80px;
-  padding-left: 40px;
+  padding-left: 30px;
 }
 
 /* Hauptlinie */
@@ -629,3 +630,6 @@ opacity:0;
   box-shadow:0 0 10px #ec4899;
 }
 
+*{
+  max-width:100%;
+}
