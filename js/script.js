@@ -234,22 +234,25 @@ const correctPassword = "15.04.2025";
 
 if(password === correctPassword){
 
-document.getElementById("loginScreen").style.display = "none";
-document.getElementById("mainContent").style.display = "block";
-updateRelationshipCounter();
-setTimeout(()=>{
+  // 🔥 LOGIN SPEICHERN
+  localStorage.setItem("loggedIn", "true");
 
-confetti({
-particleCount:300,
-spread:180,
-origin:{y:0.6}
-});
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("mainContent").style.display = "block";
 
-},600);
+  updateRelationshipCounter();
+
+  setTimeout(()=>{
+    confetti({
+      particleCount:300,
+      spread:180,
+      origin:{y:0.6}
+    });
+  },600);
 
 }else{
 
-alert("Das stimmt leider nicht ❤️");
+  alert("Das stimmt leider nicht ❤️");
 
 }
 
@@ -454,7 +457,24 @@ function loadEvents(){
   });
 
 }
+// 🔥 AUTO LOGIN CHECK
+window.addEventListener("load", () => {
 
+  if(localStorage.getItem("loggedIn") === "true"){
+
+    const loginScreen = document.getElementById("loginScreen");
+    const mainContent = document.getElementById("mainContent");
+
+    if(loginScreen && mainContent){
+      loginScreen.style.display = "none";
+      mainContent.style.display = "block";
+
+      updateRelationshipCounter();
+    }
+
+  }
+
+});
 
 window.addTodo = addTodo;
 window.toggleTodo = toggleTodo;
