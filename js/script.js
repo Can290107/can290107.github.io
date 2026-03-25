@@ -344,7 +344,6 @@ function deleteTodo(id) {
 /* ---------------- Kalender ---------------- */
 
 let currentDate = new Date();
-let unsubscribeEvents = null;
 
 function renderCalendar(events = {}) {
 
@@ -433,12 +432,7 @@ function loadEvents(){
     return;
   }
 
-  // 🔥 FIX: Mehrfach-Listener verhindern
-  if(unsubscribeEvents){
-    unsubscribeEvents();
-  }
-
-  unsubscribeEvents = onSnapshot(collection(db, "events"), (snapshot) => {
+  onSnapshot(collection(db, "events"), (snapshot) => {
 
     const events = {};
 
@@ -450,6 +444,7 @@ function loadEvents(){
   });
 
 }
+
 
 window.addTodo = addTodo;
 window.toggleTodo = toggleTodo;
