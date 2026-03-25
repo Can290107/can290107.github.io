@@ -629,7 +629,32 @@ opacity:0;
   background:#ec4899;
   box-shadow:0 0 10px #ec4899;
 }
+.arrow-btn{
+  width:45px;
+  height:45px;
 
-*{
-  max-width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:22px;
+  font-weight:600;
+
+  border-radius:50%;
+  border:none;
+
+  background:rgba(236,72,153,0.15);
+  color:#ec4899;
+
+  cursor:pointer;
+
+  transition:all 0.3s ease;
 }
+
+.arrow-btn:hover{
+  background:#ec4899;
+  color:white;
+  transform:scale(1.1);
+  box-shadow:0 0 15px rgba(236,72,153,0.6);
+}
+
