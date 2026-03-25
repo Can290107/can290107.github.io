@@ -814,16 +814,12 @@ ul{
   padding-left: 0;
 }
 
-/* 🔥 iOS Reset Fix */
+/* nur problematische Elemente fixen */
 
-button,
-input,
-textarea {
+.arrow-btn,
+.todo-item button {
   -webkit-appearance: none;
   appearance: none;
-  border: none;
-  outline: none;
-  background: none;
 }
 
 /* verhindert weißen Hintergrund */
@@ -834,5 +830,5 @@ textarea {
 .todo-item,
 .calendar,
 section{
-  background: rgba(20, 30, 50, 0.6);
+  background: rgba(20, 30, 50, 0.6) !important;
 }
