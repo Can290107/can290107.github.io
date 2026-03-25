@@ -411,18 +411,43 @@ function renderCalendar(events = {}) {
 
     div.textContent = day;
 
-    div.onclick = () => {
+   div.onclick = () => {
 
-      if(!db) return;
+  if(!db) return;
 
-      const text = prompt("Was wollen wir an diesem Tag machen? ❤️", hasEvent || "");
+  // 👉 Wenn schon Event existiert
+  if(hasEvent){
 
-      if(text){
-        setDoc(doc(db, "events", key), {
-          text: text
-        });
-      }
-    };
+    const action = prompt(
+      `Event:\n"${hasEvent}"\n\n✏️ Neu eingeben zum ändern\n❌ "löschen" eingeben zum entfernen`
+    );
+
+    if(action === null) return;
+
+    if(action.toLowerCase() === "löschen"){
+      deleteDoc(doc(db, "events", key));
+      return;
+    }
+
+    if(action.trim() !== ""){
+      setDoc(doc(db, "events", key), {
+        text: action
+      });
+    }
+
+  } 
+  else {
+    // 👉 Neues Event
+    const text = prompt("Was wollen wir an diesem Tag machen? ❤️");
+
+    if(text){
+      setDoc(doc(db, "events", key), {
+        text: text
+      });
+    }
+  }
+
+};
 
     grid.appendChild(div);
   }
