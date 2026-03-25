@@ -457,8 +457,8 @@ function loadEvents(){
   });
 
 }
-// 🔥 AUTO LOGIN CHECK
-window.addEventListener("load", () => {
+// 🔥 AUTO LOGIN SOFORT (ohne Delay)
+(function(){
 
   if(localStorage.getItem("loggedIn") === "true"){
 
@@ -474,7 +474,7 @@ window.addEventListener("load", () => {
 
   }
 
-});
+})();
 
 window.addTodo = addTodo;
 window.toggleTodo = toggleTodo;
