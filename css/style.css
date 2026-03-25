@@ -748,11 +748,15 @@ opacity:0;
 
   border-radius:12px;
 
-  background:rgba(255,255,255,0.05);
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.05);
 
   backdrop-filter:blur(10px);
 
   transition:all 0.25s ease;
+}
+.todo-item *{
+  background: transparent !important;
 }
 .todo-item button{
   padding:8px 12px;
@@ -776,6 +780,8 @@ opacity:0;
 .todo-item span{
   cursor:pointer;
   font-size:14px;
+  background: transparent;
+  color: white;
 }
 
 /* Erledigt */
@@ -808,3 +814,4 @@ ul{
   list-style: none;
   padding-left: 0;
 }
+
