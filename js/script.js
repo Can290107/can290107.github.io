@@ -235,7 +235,7 @@ const correctPassword = "15.04.2025";
 if(password === correctPassword){
 
   // 🔥 LOGIN SPEICHERN
-  localStorage.setItem("loggedIn", "true");
+  localStorage.setItem("loginTime", Date.now());
 
   document.getElementById("loginScreen").style.display = "none";
   document.getElementById("mainContent").style.display = "block";
@@ -460,16 +460,30 @@ function loadEvents(){
 // 🔥 AUTO LOGIN SOFORT (ohne Delay)
 (function(){
 
-  if(localStorage.getItem("loggedIn") === "true"){
+  const loginTime = localStorage.getItem("loginTime");
 
-    const loginScreen = document.getElementById("loginScreen");
-    const mainContent = document.getElementById("mainContent");
+  if(loginTime){
 
-    if(loginScreen && mainContent){
-      loginScreen.style.display = "none";
-      mainContent.style.display = "block";
+    const now = Date.now();
+    const diff = now - loginTime;
 
-      updateRelationshipCounter();
+    const oneHour = 1000 * 60 * 60; // 1 Stunde
+
+    if(diff < oneHour){
+
+      const loginScreen = document.getElementById("loginScreen");
+      const mainContent = document.getElementById("mainContent");
+
+      if(loginScreen && mainContent){
+        loginScreen.style.display = "none";
+        mainContent.style.display = "block";
+
+        updateRelationshipCounter();
+      }
+
+    }else{
+      // 🔥 Ablauf → Login zurücksetzen
+      localStorage.removeItem("loginTime");
     }
 
   }
