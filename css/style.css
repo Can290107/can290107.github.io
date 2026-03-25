@@ -1,19 +1,4 @@
-/* 🔥 iOS Reset Fix */
 
-button,
-input,
-textarea {
-  -webkit-appearance: none;
-  appearance: none;
-  border: none;
-  outline: none;
-  background: none;
-}
-
-/* verhindert weißen Hintergrund */
-* {
-  -webkit-tap-highlight-color: transparent;
-}
 
 html, body{
   width:100%;
@@ -827,4 +812,27 @@ opacity:0;
 ul{
   list-style: none;
   padding-left: 0;
+}
+
+/* 🔥 iOS Reset Fix */
+
+button,
+input,
+textarea {
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+/* verhindert weißen Hintergrund */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.todo-item,
+.calendar,
+section{
+  background: rgba(20, 30, 50, 0.6);
 }
