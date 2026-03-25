@@ -755,9 +755,7 @@ opacity:0;
 
   transition:all 0.25s ease;
 }
-.todo-item *{
-  background: transparent !important;
-}
+
 .todo-item button{
   padding:8px 12px;
   font-size:14px;

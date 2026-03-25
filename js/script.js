@@ -297,17 +297,25 @@ function loadTodos() {
       const todo = docItem.data();
 
       const li = document.createElement("li");
-      li.classList.add("todo-item");
+li.classList.add("todo-item");
 
-      if (todo.done) li.classList.add("done");
+if (todo.done) li.classList.add("done");
 
-      li.innerHTML = `
-      <div class="todo-left" onclick="toggleTodo('${docItem.id}', ${todo.done})">
-        ${todo.text}
-        </div>
-          <button onclick="deleteTodo('${docItem.id}')">✕</button>
-          `;
+      // Text (linke Seite)
+      const left = document.createElement("div");
+      left.classList.add("todo-left");
+      left.textContent = todo.text;
 
+      left.onclick = () => toggleTodo(docItem.id, todo.done);
+
+        // Delete Button
+      const btn = document.createElement("button");
+      btn.textContent = "✕";
+      btn.onclick = () => deleteTodo(docItem.id);
+
+      // Elemente zusammensetzen
+      li.appendChild(left);
+      li.appendChild(btn);
       list.appendChild(li);
     });
 
