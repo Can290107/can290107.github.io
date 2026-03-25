@@ -1,3 +1,20 @@
+/* 🔥 iOS Reset Fix */
+
+button,
+input,
+textarea {
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  outline: none;
+  background: none;
+}
+
+/* verhindert weißen Hintergrund */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 html, body{
   width:100%;
   overflow-x:hidden;
@@ -663,7 +680,7 @@ opacity:0;
   border-radius:50%;
   border:1px solid rgba(236,72,153,0.3);
 
-  background:rgba(255,255,255,0.05);
+  background:rgba(255,255,255,0.05) !important;
   color:#ec4899;
 
   cursor:pointer;
@@ -749,7 +766,7 @@ opacity:0;
   border-radius:12px;
 
   background:rgba(255,255,255,0.06) !important; 
-  border:1px solid rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.05) !important;
 
   backdrop-filter:blur(10px);
 
