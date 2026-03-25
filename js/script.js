@@ -302,9 +302,11 @@ function loadTodos() {
       if (todo.done) li.classList.add("done");
 
       li.innerHTML = `
-        <span onclick="toggleTodo('${docItem.id}', ${todo.done})">${todo.text}</span>
-        <button onclick="deleteTodo('${docItem.id}')">❌</button>
-      `;
+      <div class="todo-left" onclick="toggleTodo('${docItem.id}', ${todo.done})">
+        ${todo.text}
+        </div>
+          <button onclick="deleteTodo('${docItem.id}')">✕</button>
+          `;
 
       list.appendChild(li);
     });

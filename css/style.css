@@ -754,6 +754,15 @@ opacity:0;
 
   transition:all 0.25s ease;
 }
+.todo-item button{
+  padding:8px 12px;
+  font-size:14px;
+}
+.todo-left{
+  flex:1;
+  text-align:left;
+  cursor:pointer;
+}
 
 /* Hover */
 
@@ -794,4 +803,8 @@ opacity:0;
 .todo-item button:hover{
   background:#ec4899;
   color:white;
+}
+ul{
+  list-style: none;
+  padding-left: 0;
 }
