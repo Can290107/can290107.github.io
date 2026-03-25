@@ -827,8 +827,10 @@ ul{
   -webkit-tap-highlight-color: transparent;
 }
 
-.todo-item,
-.calendar,
-section{
+.todo-item{
+  background: rgba(20, 30, 50, 0.6) !important;
+}
+
+.calendar{
   background: rgba(20, 30, 50, 0.6) !important;
 }
