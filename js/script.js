@@ -31,6 +31,7 @@ function initFirebase() {
 }
 
 initFirebase();
+
 /* ---------------- Elemente ---------------- */
 
 const button = document.getElementById("startBtn");
@@ -353,7 +354,7 @@ function renderCalendar(events = {}) {
   if(!grid || !title) return;
 
   // 🔥 Smooth Animation Start
-  //grid.style.opacity = 0.3;
+  grid.style.opacity = 0.3;
 
   grid.innerHTML = "";
 
@@ -415,9 +416,9 @@ function renderCalendar(events = {}) {
   }
 
   // 🔥 Smooth Animation Ende
-  //requestAnimationFrame(() => {
-  //grid.style.opacity = 1;
- // });
+  requestAnimationFrame(() => {
+  grid.style.opacity = 1;
+  });
 }
 
 function changeMonth(direction){
@@ -427,7 +428,10 @@ function changeMonth(direction){
 
 function loadEvents(){
 
-  if(!db) return;
+  if(!db){
+    setTimeout(loadEvents, 100);
+    return;
+  }
 
   // 🔥 FIX: Mehrfach-Listener verhindern
   if(unsubscribeEvents){
@@ -452,3 +456,4 @@ window.toggleTodo = toggleTodo;
 window.deleteTodo = deleteTodo;
 window.changeMonth = changeMonth;
 window.goBack = goBack;
+window.loadEvents = loadEvents;
