@@ -343,6 +343,7 @@ function deleteTodo(id) {
 /* ---------------- Kalender ---------------- */
 
 let currentDate = new Date();
+let unsubscribeEvents = null;
 
 function renderCalendar(events = {}) {
 
@@ -351,17 +352,21 @@ function renderCalendar(events = {}) {
 
   if(!grid || !title) return;
 
-  grid.innerHTML = "";
-  // Wochentage
-const days = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+  // 🔥 Smooth Animation Start
+  grid.style.opacity = 0;
 
-days.forEach(day => {
-  const div = document.createElement("div");
-  div.textContent = day;
-  div.style.fontWeight = "bold";
-  div.style.opacity = "0.7";
-  grid.appendChild(div);
-});
+  grid.innerHTML = "";
+
+  // Wochentage
+  const days = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+
+  days.forEach(day => {
+    const div = document.createElement("div");
+    div.textContent = day;
+    div.style.fontWeight = "bold";
+    div.style.opacity = "0.7";
+    grid.appendChild(div);
+  });
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -372,7 +377,8 @@ days.forEach(day => {
   });
 
   let firstDay = new Date(year, month, 1).getDay();
-firstDay = firstDay === 0 ? 6 : firstDay - 1;
+  firstDay = firstDay === 0 ? 6 : firstDay - 1;
+
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
   // Leere Felder
@@ -407,6 +413,11 @@ firstDay = firstDay === 0 ? 6 : firstDay - 1;
 
     grid.appendChild(div);
   }
+
+  // 🔥 Smooth Animation Ende
+  setTimeout(() => {
+    grid.style.opacity = 1;
+  }, 50);
 }
 
 function changeMonth(direction){
@@ -418,7 +429,12 @@ function loadEvents(){
 
   if(!db) return;
 
-  onSnapshot(collection(db, "events"), (snapshot) => {
+  // 🔥 FIX: Mehrfach-Listener verhindern
+  if(unsubscribeEvents){
+    unsubscribeEvents();
+  }
+
+  unsubscribeEvents = onSnapshot(collection(db, "events"), (snapshot) => {
 
     const events = {};
 

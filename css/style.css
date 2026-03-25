@@ -605,11 +605,26 @@ opacity:0;
 
 /*-------Kalender-----*/
 
+.calendar{
+  padding:20px;
+  border-radius:20px;
+  background:rgba(255,255,255,0.03);
+}
+
+.calendar-header{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:20px;
+  margin-bottom:20px;
+}
+
 .calendar-grid{
   display:grid;
   grid-template-columns: repeat(7, 1fr);
   gap:10px;
   margin-top:20px;
+  transition:opacity 0.3s ease;
 }
 
 .calendar-day{
@@ -617,44 +632,52 @@ opacity:0;
   padding:15px;
   border-radius:10px;
   cursor:pointer;
-  transition:0.3s;
+  transition:0.25s;
 }
 
-.calendar-day:hover{
-  background:#ec4899;
-  transform:scale(1.1);
+@media (hover:hover){
+  .calendar-day:hover{
+    background:#ec4899;
+    transform:scale(1.05);
+  }
 }
 
 .calendar-day.has-event{
   background:#ec4899;
   box-shadow:0 0 10px #ec4899;
 }
+
+/* 🔥 Neue Premium Pfeile */
+
 .arrow-btn{
-  width:45px;
-  height:45px;
+  width:40px;
+  height:40px;
 
   display:flex;
   align-items:center;
   justify-content:center;
 
-  font-size:22px;
-  font-weight:600;
+  font-size:20px;
+  font-weight:500;
 
   border-radius:50%;
-  border:none;
+  border:1px solid rgba(236,72,153,0.3);
 
-  background:rgba(236,72,153,0.15);
+  background:rgba(255,255,255,0.05);
   color:#ec4899;
 
   cursor:pointer;
 
-  transition:all 0.3s ease;
+  backdrop-filter:blur(10px);
+
+  transition:all 0.25s ease;
 }
 
 .arrow-btn:hover{
   background:#ec4899;
   color:white;
-  transform:scale(1.1);
-  box-shadow:0 0 15px rgba(236,72,153,0.6);
-}
 
+  transform:scale(1.08);
+
+  box-shadow:0 0 20px rgba(236,72,153,0.5);
+}
