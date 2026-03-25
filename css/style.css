@@ -748,7 +748,7 @@ opacity:0;
 
   border-radius:12px;
 
-  background:rgba(255,255,255,0.06);
+  background:rgba(255,255,255,0.06) !important; 
   border:1px solid rgba(255,255,255,0.05);
 
   backdrop-filter:blur(10px);
@@ -780,8 +780,7 @@ opacity:0;
 .todo-item span{
   cursor:pointer;
   font-size:14px;
-  background: transparent;
-  color: white;
+  
 }
 
 /* Erledigt */
@@ -815,3 +814,8 @@ ul{
   padding-left: 0;
 }
 
+input, button {
+  background-color: #1e293b;
+  color: white;
+  border: none;
+}
