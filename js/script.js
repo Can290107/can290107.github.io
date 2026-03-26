@@ -6,7 +6,7 @@ let collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc;
 
 // Firebase Config
 const firebaseConfig = {
-  apiKey: "AIzaSyGJQTZGjNqoHsjcEJ1W1DHryoXS-xpeOuVI",
+  apiKey: "AIzaSyDQTZGjNqoHsjcEJ1W1DHryoXS-xpeOuVI",
   authDomain: "geburtstag-seite.firebaseapp.com",
   projectId: "geburtstag-seite",
   storageBucket: "geburtstag-seite.firebasestorage.app",
