@@ -25,15 +25,40 @@ firebase.initializeApp(firebaseConfig);
 auth = firebase.auth();
 firebaseDb = firebase.firestore();
 
-// Firebase Imports für Kompatibilität
-const db = firebaseDb; // Globale Referenz
-collection = (db, collectionName) => db.collection(collectionName);
-addDoc = (collectionRef, data) => collectionRef.add(data);
-onSnapshot = (query, callback) => query.onSnapshot(callback);
-deleteDoc = (docRef) => docRef.delete();
-doc = (db, collectionName, docId) => db.collection(collectionName).doc(docId);
-updateDoc = (docRef, data) => docRef.update(data);
-setDoc = (docRef, data) => docRef.set(data);
+// Firebase Adapter - entweder aus index.html oder tools.html
+const db = firebaseDb;
+
+// Wrapper-Funktionen die auf Seite definiert sein können, sonst default nutzen
+if (typeof window.collection === 'undefined') {
+  window.collection = (collectionName) => db.collection(collectionName);
+}
+if (typeof window.addDoc === 'undefined') {
+  window.addDoc = (collectionRef, data) => collectionRef.add(data);
+}
+if (typeof window.onSnapshot === 'undefined') {
+  window.onSnapshot = (query, callback) => query.onSnapshot(callback);
+}
+if (typeof window.deleteDoc === 'undefined') {
+  window.deleteDoc = (docRef) => docRef.delete();
+}
+if (typeof window.doc === 'undefined') {
+  window.doc = (collectionName, docId) => db.collection(collectionName).doc(docId);
+}
+if (typeof window.updateDoc === 'undefined') {
+  window.updateDoc = (docRef, data) => docRef.update(data);
+}
+if (typeof window.setDoc === 'undefined') {
+  window.setDoc = (docRef, data) => docRef.set(data);
+}
+
+// Nutze globale Funktionen
+collection = window.collection;
+addDoc = window.addDoc;
+onSnapshot = window.onSnapshot;
+deleteDoc = window.deleteDoc;
+doc = window.doc;
+updateDoc = window.updateDoc;
+setDoc = window.setDoc;
 
 // 🔥 Check Login Status beim Laden
 function checkLoginStatus() {
@@ -340,7 +365,7 @@ function goBack(){
 
 function loadTodos() {
 
-  onSnapshot(collection(db, "todos"), (snapshot) => {
+  onSnapshot(collection("todos"), (snapshot) => {
 
     const list = document.getElementById("todoList");
     list.innerHTML = "";
@@ -382,7 +407,7 @@ function addTodo() {
 
   if (!input.value.trim()) return;
 
-  addDoc(collection(db, "todos"), {
+  addDoc(collection("todos"), {
     text: input.value,
     done: false
   });
@@ -392,7 +417,7 @@ function addTodo() {
 
 function toggleTodo(id, currentState) {
 
-  updateDoc(doc(db, "todos", id), {
+  updateDoc(doc("todos", id), {
     done: !currentState
   });
 
@@ -400,7 +425,7 @@ function toggleTodo(id, currentState) {
 
 function deleteTodo(id) {
 
-  deleteDoc(doc(db, "todos", id));
+  deleteDoc(doc("todos", id));
 
 }
 
@@ -425,8 +450,8 @@ setTimeout(() => {
   
   if(deleteBtn) {
     deleteBtn.onclick = () => {
-      if(!db || !currentEventKey) return;
-      deleteDoc(doc(db, "events", currentEventKey));
+      if(!currentEventKey) return;
+      deleteDoc(doc("events", currentEventKey));
       closePopup();
     };
   }
@@ -435,7 +460,7 @@ setTimeout(() => {
     editBtn.onclick = () => {
       const newText = prompt("Neuer Text:");
       if(newText && newText.trim() !== ""){
-        setDoc(doc(db, "events", currentEventKey), {
+        setDoc(doc("events", currentEventKey), {
           text: newText
         });
       }
@@ -498,8 +523,6 @@ function renderCalendar(events = {}) {
 
    div.onclick = () => {
 
-  if(!db) return;
-
   // 👉 Wenn Event existiert → Popup öffnen
   if(hasEvent){
     openPopup(hasEvent, key);
@@ -508,7 +531,7 @@ function renderCalendar(events = {}) {
     const text = prompt("Was wollen wir an diesem Tag machen? ❤️");
 
     if(text){
-      setDoc(doc(db, "events", key), {
+      setDoc(doc("events", key), {
         text: text
       });
     }
@@ -532,12 +555,7 @@ function changeMonth(direction){
 
 function loadEvents(){
 
-  if(!db){
-    setTimeout(loadEvents, 100);
-    return;
-  }
-
-  onSnapshot(collection(db, "events"), (snapshot) => {
+  onSnapshot(collection("events"), (snapshot) => {
 
     const events = {};
 

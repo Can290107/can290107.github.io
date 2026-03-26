@@ -71,20 +71,22 @@ const firebaseConfig = {
   appId: "1:825693028407:web:55ebde2398f2f9cc907fb2"
 };
 
-firebase.initializeApp(firebaseConfig);
+// Initialisiere Firebase (oder nutze bestehende)
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
 const db = firebase.firestore();
 
-// GLOBAL machen
+// GLOBAL machen für script.js
 window.db = db;
-window.firebaseFns = {
-  collection: (db, collectionName) => db.collection(collectionName),
-  addDoc: (collectionRef, data) => collectionRef.add(data),
-  onSnapshot: (query, callback) => query.onSnapshot(callback),
-  deleteDoc: (docRef) => docRef.delete(),
-  doc: (db, collectionName, docId) => db.collection(collectionName).doc(docId),
-  updateDoc: (docRef, data) => docRef.update(data),
-  setDoc: (docRef, data) => docRef.set(data)
-};
+window.collection = (collectionName) => db.collection(collectionName);
+window.addDoc = (collectionRef, data) => collectionRef.add(data);
+window.onSnapshot = (query, callback) => query.onSnapshot(callback);
+window.deleteDoc = (docRef) => docRef.delete();
+window.doc = (collectionName, docId) => db.collection(collectionName).doc(docId);
+window.updateDoc = (docRef, data) => docRef.update(data);
+window.setDoc = (docRef, data) => docRef.set(data);
 
 // Logout Funktion
 window.handleLogout = function() {
@@ -92,26 +94,10 @@ window.handleLogout = function() {
   window.location.href = "index.html";
 };
 </script>
-</script>
 
-<script>
-const script = document.createElement("script");
-script.src = "js/script.js";
+<script src="js/script.js"></script>
 
-script.onload = () => {
-  console.log("Script geladen ✅");
-
-  if(window.loadTodos){
-    loadTodos();
-  }
-
-  if(window.loadEvents){
-    loadEvents();
-  }
-};
-
-document.body.appendChild(script);
-</script>
+<!-- Event Popup -->
 <div id="eventPopup" class="event-popup hidden">
   <div class="event-box">
     <p id="eventText"></p>
@@ -123,5 +109,18 @@ document.body.appendChild(script);
     </div>
   </div>
 </div>
-</body>
+
+<script>
+// Initalisiere Tools nach Delay
+setTimeout(() => {
+  if (window.loadTodos) {
+    console.log("loadTodos wird aufgerufen...");
+    loadTodos();
+  }
+  if (window.loadEvents) {
+    console.log("loadEvents wird aufgerufen...");
+    loadEvents();
+  }
+}, 200);
+</script>
 </html>
