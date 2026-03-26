@@ -39,26 +39,28 @@ setDoc = (docRef, data) => docRef.set(data);
 function checkLoginStatus() {
   const loggedInUser = localStorage.getItem("loggedInUser");
   
-  if (loggedInUser && users[loggedInUser.toLowerCase()]) {
-    // User ist im localStorage eingeloggt
+  // Warte bis DOM existiert
+  setTimeout(() => {
     const loginScreen = document.getElementById("loginScreen");
     const mainContent = document.getElementById("mainContent");
     
-    if (loginScreen && mainContent) {
+    if (!loginScreen || !mainContent) {
+      // DOM noch nicht bereit - versuche später
+      setTimeout(checkLoginStatus, 100);
+      return;
+    }
+    
+    if (loggedInUser && users[loggedInUser.toLowerCase()]) {
+      // User ist im localStorage eingeloggt
       loginScreen.style.display = "none";
       mainContent.style.display = "block";
       updateRelationshipCounter();
-    }
-  } else {
-    // Nicht eingeloggt
-    const loginScreen = document.getElementById("loginScreen");
-    const mainContent = document.getElementById("mainContent");
-    
-    if (loginScreen && mainContent) {
+    } else {
+      // Nicht eingeloggt
       loginScreen.style.display = "flex";
       mainContent.style.display = "none";
     }
-  }
+  }, 100);
 }
 
 // Am Anfang prüfen
@@ -251,11 +253,12 @@ type();
 
 /*---------Login Button Event---------*/
 
-const loginBtn = document.getElementById("loginBtn");
-
-if(loginBtn){
-loginBtn.addEventListener("click", handleLogin);
-}
+setTimeout(() => {
+  const loginBtn = document.getElementById("loginBtn");
+  if(loginBtn){
+    loginBtn.addEventListener("click", handleLogin);
+  }
+}, 100);
 
 /*---------Login mit Benutzernamen---------*/
 function handleLogin() {
