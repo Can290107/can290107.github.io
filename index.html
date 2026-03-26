@@ -14,6 +14,10 @@
 
 <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 
+<!-- Firebase Auth -->
+<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js"></script>
+
 </head>
 
 <body>
@@ -29,17 +33,27 @@
 
 <h2>🔒 Private Seite</h2>
 
-<p>Gib das Datum ein, an dem unsere Geschichte begann</p>
+<p>Meld dich an um unsere Geschichte zu sehen ❤️</p>
+
+<input 
+type="email"
+id="emailInput"
+placeholder="Email"
+aria-label="Email eingeben"
+autocomplete="email"
+>
 
 <input 
 type="password"
 id="passwordInput"
-placeholder="TT.MM.JJJJ"
-aria-label="Datum eingeben"
-autocomplete="off"
+placeholder="Passwort"
+aria-label="Passwort eingeben"
+autocomplete="current-password"
 >
 
-<button id="loginBtn">Öffnen</button>
+<button id="loginBtn">Anmelden</button>
+
+<p id="errorMsg" style="color:#ff6b6b; margin-top:15px; display:none;"></p>
 
 </div>
 <div id="mainContent" style="display:none;">
@@ -234,7 +248,7 @@ Starten 🎉
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 
-<script src="js/script.js"></script>
+<script type="module" src="js/script.js"></script>
 </div>
 </body>
 </html>

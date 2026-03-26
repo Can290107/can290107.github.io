@@ -3,6 +3,51 @@ let currentEventKey = null;
 let db;
 let collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc;
 
+// Firebase Auth
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } 
+from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+import { getFirestore } 
+from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+// Firebase Config
+const firebaseConfig = {
+  apiKey: "AIzaSyGJQTZGjNqoHsjcEJ1W1DHryoXS-xpeOuVI",
+  authDomain: "geburtstag-seite.firebaseapp.com",
+  projectId: "geburtstag-seite",
+  storageBucket: "geburtstag-seite.firebasestorage.app",
+  messagingSenderId: "825693028407",
+  appId: "1:825693028407:web:55ebde2398f2f9cc907fb2"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const firebaseDb = getFirestore(app);
+
+// 🔥 Auth State Listener
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    // User ist angemeldet
+    const loginScreen = document.getElementById("loginScreen");
+    const mainContent = document.getElementById("mainContent");
+    
+    if (loginScreen && mainContent) {
+      loginScreen.style.display = "none";
+      mainContent.style.display = "block";
+      updateRelationshipCounter();
+    }
+  } else {
+    // User ist nicht angemeldet
+    const loginScreen = document.getElementById("loginScreen");
+    const mainContent = document.getElementById("mainContent");
+    
+    if (loginScreen && mainContent) {
+      loginScreen.style.display = "flex";
+      mainContent.style.display = "none";
+    }
+  }
+});
+
 // 🔥 Warten bis Firebase da ist
 function initFirebase() {
   if (!window.firebaseFns || !window.db) {
@@ -31,7 +76,6 @@ function initFirebase() {
     loadEvents();
   }
 }
-
 initFirebase();
 
 /* ---------------- Elemente ---------------- */
@@ -224,38 +268,51 @@ type();
 const loginBtn = document.getElementById("loginBtn");
 
 if(loginBtn){
-loginBtn.addEventListener("click", checkPassword);
+loginBtn.addEventListener("click", handleLogin);
 }
 
-/*---------Login---------*/
-function checkPassword(){
+/*---------Login mit Firebase Auth---------*/
+async function handleLogin(){
 
+const email = document.getElementById("emailInput").value;
 const password = document.getElementById("passwordInput").value;
+const errorMsg = document.getElementById("errorMsg");
 
-const correctPassword = "15.04.2025";
+if(!email.trim() || !password.trim()){
+  errorMsg.textContent = "Bitte Email und Passwort eingeben ❤️";
+  errorMsg.style.display = "block";
+  return;
+}
 
-if(password === correctPassword){
+try {
+  await signInWithEmailAndPassword(auth, email, password);
+  
+  // ✅ Login erfolgreich - onAuthStateChanged behandelt den Rest
+  confetti({
+    particleCount:300,
+    spread:180,
+    origin:{y:0.6}
+  });
 
-  // 🔥 LOGIN SPEICHERN
-  localStorage.setItem("loginTime", Date.now());
+  // Clear inputs
+  document.getElementById("emailInput").value = "";
+  document.getElementById("passwordInput").value = "";
+  errorMsg.style.display = "none";
 
-  document.getElementById("loginScreen").style.display = "none";
-  document.getElementById("mainContent").style.display = "block";
-
-  updateRelationshipCounter();
-
-  setTimeout(()=>{
-    confetti({
-      particleCount:300,
-      spread:180,
-      origin:{y:0.6}
-    });
-  },600);
-
-}else{
-
-  alert("Das stimmt leider nicht ❤️");
-
+} catch (error) {
+  errorMsg.style.display = "block";
+  
+  if (error.code === 'auth/user-not-found') {
+    errorMsg.textContent = "Benutzer nicht gefunden ❌";
+  } else if (error.code === 'auth/wrong-password') {
+    errorMsg.textContent = "Passwort falsch ❌";
+  } else if (error.code === 'auth/invalid-email') {
+    errorMsg.textContent = "Email ungültig ❌";
+  } else {
+    errorMsg.textContent = "Login fehlgeschlagen ❌";
+  }
+  
+  console.error("Login error:", error);
 }
 
 }
@@ -493,38 +550,8 @@ function loadEvents(){
   });
 
 }
-// 🔥 AUTO LOGIN SOFORT (ohne Delay)
-(function(){
-
-  const loginTime = localStorage.getItem("loginTime");
-
-  if(loginTime){
-
-    const now = Date.now();
-    const diff = now - loginTime;
-
-    const oneHour = 1000 * 60 * 60; // 1 Stunde
-
-    if(diff < oneHour){
-
-      const loginScreen = document.getElementById("loginScreen");
-      const mainContent = document.getElementById("mainContent");
-
-      if(loginScreen && mainContent){
-        loginScreen.style.display = "none";
-        mainContent.style.display = "block";
-
-        updateRelationshipCounter();
-      }
-
-    }else{
-      // 🔥 Ablauf → Login zurücksetzen
-      localStorage.removeItem("loginTime");
-    }
-
-  }
-
-})();
+// 🔥 AUTO LOGIN durch Firebase Auth (onAuthStateChanged oben kümmert sich darum)
+// Keine zusätzliche Logik nötig - Firebase verwaltet die Session
 
 window.addTodo = addTodo;
 window.toggleTodo = toggleTodo;

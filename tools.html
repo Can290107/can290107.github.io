@@ -7,14 +7,20 @@
 <title>Unsere Tools ❤️</title>
 
 <link rel="stylesheet" href="css/style.css">
+
+<!-- Firebase Auth -->
+<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js"></script>
+
 </head>
 
 <body>
 
 <h1>Unsere kleinen Tools ❤️</h1>
 
-<!-- Zurück Button -->
+<!-- Zurück Button + Logout -->
 <button onclick="goBack()">⬅ Zurück</button>
+<button onclick="handleLogout()" style="margin-left:10px; background:#db2777;">Abmelden</button>
 
 <!-- Kalender -->
 <section>
@@ -47,6 +53,8 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } 
+from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc } 
 from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
@@ -60,7 +68,16 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
+
+// 🔥 Auth Check - Nur angemeldete User dürfen hier sein
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    // Nicht angemeldet → Zurück zur Startseite
+    window.location.href = "index.html";
+  }
+});
 
 // GLOBAL machen
 window.db = db;
@@ -72,6 +89,16 @@ window.firebaseFns = {
   doc,
   updateDoc,
   setDoc
+};
+
+// Logout Funktion
+window.handleLogout = async function() {
+  try {
+    await signOut(auth);
+    window.location.href = "index.html";
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
 };
 
 const script = document.createElement("script");
