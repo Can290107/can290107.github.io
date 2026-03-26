@@ -401,24 +401,32 @@ function openPopup(text, key){
 function closePopup(){
   document.getElementById("eventPopup").classList.add("hidden");
 }
-document.getElementById("deleteEventBtn").onclick = () => {
-  if(!db || !currentEventKey) return;
 
-  deleteDoc(doc(db, "events", currentEventKey));
-  closePopup();
-};
-
-document.getElementById("editEventBtn").onclick = () => {
-  const newText = prompt("Neuer Text:");
-
-  if(newText && newText.trim() !== ""){
-    setDoc(doc(db, "events", currentEventKey), {
-      text: newText
-    });
+// Wait for DOM to be ready
+setTimeout(() => {
+  const deleteBtn = document.getElementById("deleteEventBtn");
+  const editBtn = document.getElementById("editEventBtn");
+  
+  if(deleteBtn) {
+    deleteBtn.onclick = () => {
+      if(!db || !currentEventKey) return;
+      deleteDoc(doc(db, "events", currentEventKey));
+      closePopup();
+    };
   }
-
-  closePopup();
-};
+  
+  if(editBtn) {
+    editBtn.onclick = () => {
+      const newText = prompt("Neuer Text:");
+      if(newText && newText.trim() !== ""){
+        setDoc(doc(db, "events", currentEventKey), {
+          text: newText
+        });
+      }
+      closePopup();
+    };
+  }
+}, 100);
 function renderCalendar(events = {}) {
 
   const grid = document.getElementById("calendarGrid");
