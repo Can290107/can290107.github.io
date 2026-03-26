@@ -61,18 +61,17 @@ if (!loggedInUser) {
   window.location.href = "index.html";
 }
 
-// Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyDQTZGjNqoHsjcEJ1W1DHryoXS-xpeOuVI",
-  authDomain: "geburtstag-seite.firebaseapp.com",
-  projectId: "geburtstag-seite",
-  storageBucket: "geburtstag-seite.firebasestorage.app",
-  messagingSenderId: "825693028407",
-  appId: "1:825693028407:web:55ebde2398f2f9cc907fb2"
-};
-
-// Initialisiere Firebase (oder nutze bestehende)
+// Firebase nur initialisieren wenn noch nicht passiert
 if (!firebase.apps.length) {
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQTZGjNqoHsjcEJ1W1DHryoXS-xpeOuVI",
+    authDomain: "geburtstag-seite.firebaseapp.com",
+    projectId: "geburtstag-seite",
+    storageBucket: "geburtstag-seite.firebasestorage.app",
+    messagingSenderId: "825693028407",
+    appId: "1:825693028407:web:55ebde2398f2f9cc907fb2"
+  };
+
   firebase.initializeApp(firebaseConfig);
 }
 
