@@ -1,5 +1,11 @@
 let currentEventKey = null;
 
+// 🔐 Einfache Benutzer-Datenbank (2 Personen)
+const users = {
+  "cansu": "Prinzessin",
+  "can": "Ichliebecansu"
+};
+
 let auth;
 let firebaseDb;
 let collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc;
@@ -29,10 +35,12 @@ doc = (db, collectionName, docId) => db.collection(collectionName).doc(docId);
 updateDoc = (docRef, data) => docRef.update(data);
 setDoc = (docRef, data) => docRef.set(data);
 
-// 🔥 Auth State Listener
-auth.onAuthStateChanged((user) => {
-  if (user) {
-    // User ist angemeldet
+// 🔥 Check Login Status beim Laden
+function checkLoginStatus() {
+  const loggedInUser = localStorage.getItem("loggedInUser");
+  
+  if (loggedInUser && users[loggedInUser.toLowerCase()]) {
+    // User ist im localStorage eingeloggt
     const loginScreen = document.getElementById("loginScreen");
     const mainContent = document.getElementById("mainContent");
     
@@ -42,7 +50,7 @@ auth.onAuthStateChanged((user) => {
       updateRelationshipCounter();
     }
   } else {
-    // User ist nicht angemeldet
+    // Nicht eingeloggt
     const loginScreen = document.getElementById("loginScreen");
     const mainContent = document.getElementById("mainContent");
     
@@ -51,7 +59,10 @@ auth.onAuthStateChanged((user) => {
       mainContent.style.display = "none";
     }
   }
-});
+}
+
+// Am Anfang prüfen
+checkLoginStatus();
 
 /* ---------------- Elemente ---------------- */
 
@@ -246,50 +257,52 @@ if(loginBtn){
 loginBtn.addEventListener("click", handleLogin);
 }
 
-/*---------Login mit Firebase Auth---------*/
-async function handleLogin(){
+/*---------Login mit Benutzernamen---------*/
+function handleLogin() {
+  const username = document.getElementById("usernameInput").value.toLowerCase().trim();
+  const password = document.getElementById("passwordInput").value;
+  const errorMsg = document.getElementById("errorMsg");
 
-const email = document.getElementById("emailInput").value;
-const password = document.getElementById("passwordInput").value;
-const errorMsg = document.getElementById("errorMsg");
+  if (!username || !password) {
+    errorMsg.textContent = "Bitte Benutzername und Passwort eingeben ❤️";
+    errorMsg.style.display = "block";
+    return;
+  }
 
-if(!email.trim() || !password.trim()){
-  errorMsg.textContent = "Bitte Email und Passwort eingeben ❤️";
-  errorMsg.style.display = "block";
-  return;
-}
+  // Prüfe ob Benutzer existiert
+  if (!users[username]) {
+    errorMsg.textContent = "Benutzer nicht gefunden ❌";
+    errorMsg.style.display = "block";
+    return;
+  }
 
-try {
-  await auth.signInWithEmailAndPassword(email, password);
+  // Prüfe ob Passwort richtig ist
+  if (users[username] !== password) {
+    errorMsg.textContent = "Passwort falsch ❌";
+    errorMsg.style.display = "block";
+    return;
+  }
+
+  // ✅ Login erfolgreich!
+  localStorage.setItem("loggedInUser", username);
   
-  // ✅ Login erfolgreich - onAuthStateChanged behandelt den Rest
+  // Confetti
   confetti({
-    particleCount:300,
-    spread:180,
-    origin:{y:0.6}
+    particleCount: 300,
+    spread: 180,
+    origin: { y: 0.6 }
   });
 
   // Clear inputs
-  document.getElementById("emailInput").value = "";
+  document.getElementById("usernameInput").value = "";
   document.getElementById("passwordInput").value = "";
   errorMsg.style.display = "none";
 
-} catch (error) {
-  errorMsg.style.display = "block";
+  // Show main content
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("mainContent").style.display = "block";
   
-  if (error.code === 'auth/user-not-found') {
-    errorMsg.textContent = "Benutzer nicht gefunden ❌";
-  } else if (error.code === 'auth/wrong-password') {
-    errorMsg.textContent = "Passwort falsch ❌";
-  } else if (error.code === 'auth/invalid-email') {
-    errorMsg.textContent = "Email ungültig ❌";
-  } else {
-    errorMsg.textContent = "Login fehlgeschlagen ❌";
-  }
-  
-  console.error("Login error:", error);
-}
-
+  updateRelationshipCounter();
 }
 
 /*----------Hereffekt beim Klicken-------------*/
@@ -533,8 +546,8 @@ function loadEvents(){
   });
 
 }
-// 🔥 AUTO LOGIN durch Firebase Auth (onAuthStateChanged oben kümmert sich darum)
-// Keine zusätzliche Logik nötig - Firebase verwaltet die Session
+// 🔥 AUTO LOGIN - Einfach localStorage Check
+// checkLoginStatus() wurde schon oben aufgerufen
 
 window.addTodo = addTodo;
 window.toggleTodo = toggleTodo;
@@ -544,3 +557,8 @@ window.goBack = goBack;
 window.loadEvents = loadEvents;
 window.loadTodos = loadTodos;
 window.openTools = openTools;
+window.handleLogin = handleLogin;
+window.handleLogout = function() {
+  localStorage.removeItem("loggedInUser");
+  window.location.href = "index.html";
+};

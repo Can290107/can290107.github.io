@@ -53,9 +53,17 @@
 </section>
 
 <script>
+// 🔐 Einfacher Login Check
+const loggedInUser = localStorage.getItem("loggedInUser");
+
+if (!loggedInUser) {
+  // Nicht angemeldet → Zurück zur Startseite
+  window.location.href = "index.html";
+}
+
 // Firebase Config
 const firebaseConfig = {
-  apiKey: "AIzaSyGJQTZGjNqoHsjcEJ1W1DHryoXS-xpeOuVI",
+  apiKey: "AIzaSyDQTZGjNqoHsjcEJ1W1DHryoXS-xpeOuVI",
   authDomain: "geburtstag-seite.firebaseapp.com",
   projectId: "geburtstag-seite",
   storageBucket: "geburtstag-seite.firebasestorage.app",
@@ -64,16 +72,7 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
 const db = firebase.firestore();
-
-// 🔥 Auth Check - Nur angemeldete User dürfen hier sein
-auth.onAuthStateChanged((user) => {
-  if (!user) {
-    // Nicht angemeldet → Zurück zur Startseite
-    window.location.href = "index.html";
-  }
-});
 
 // GLOBAL machen
 window.db = db;
@@ -88,14 +87,11 @@ window.firebaseFns = {
 };
 
 // Logout Funktion
-window.handleLogout = async function() {
-  try {
-    await auth.signOut();
-    window.location.href = "index.html";
-  } catch (error) {
-    console.error("Logout error:", error);
-  }
+window.handleLogout = function() {
+  localStorage.removeItem("loggedInUser");
+  window.location.href = "index.html";
 };
+</script>
 </script>
 
 <script>
