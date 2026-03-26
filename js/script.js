@@ -1,14 +1,8 @@
 let currentEventKey = null;
 
-let db;
+let auth;
+let firebaseDb;
 let collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc;
-
-// Firebase Auth
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } 
-from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-import { getFirestore } 
-from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -20,12 +14,23 @@ const firebaseConfig = {
   appId: "1:825693028407:web:55ebde2398f2f9cc907fb2"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const firebaseDb = getFirestore(app);
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+auth = firebase.auth();
+firebaseDb = firebase.firestore();
+
+// Firebase Imports für Kompatibilität
+const db = firebaseDb; // Globale Referenz
+collection = (db, collectionName) => db.collection(collectionName);
+addDoc = (collectionRef, data) => collectionRef.add(data);
+onSnapshot = (query, callback) => query.onSnapshot(callback);
+deleteDoc = (docRef) => docRef.delete();
+doc = (db, collectionName, docId) => db.collection(collectionName).doc(docId);
+updateDoc = (docRef, data) => docRef.update(data);
+setDoc = (docRef, data) => docRef.set(data);
 
 // 🔥 Auth State Listener
-onAuthStateChanged(auth, (user) => {
+auth.onAuthStateChanged((user) => {
   if (user) {
     // User ist angemeldet
     const loginScreen = document.getElementById("loginScreen");
@@ -47,36 +52,6 @@ onAuthStateChanged(auth, (user) => {
     }
   }
 });
-
-// 🔥 Warten bis Firebase da ist
-function initFirebase() {
-  if (!window.firebaseFns || !window.db) {
-    setTimeout(initFirebase, 100);
-    return;
-  }
-
-  db = window.db;
-
-  collection = window.firebaseFns.collection;
-  addDoc = window.firebaseFns.addDoc;
-  onSnapshot = window.firebaseFns.onSnapshot;
-  deleteDoc = window.firebaseFns.deleteDoc;
-  doc = window.firebaseFns.doc;
-  updateDoc = window.firebaseFns.updateDoc;
-  setDoc = window.firebaseFns.setDoc;
-
-  console.log("Firebase ready ✅");
-
-  // Jetzt erst starten
-  if(document.getElementById("todoList")){
-    loadTodos();
-  }
-
-  if(document.getElementById("calendarGrid")){
-    loadEvents();
-  }
-}
-initFirebase();
 
 /* ---------------- Elemente ---------------- */
 
@@ -285,7 +260,7 @@ if(!email.trim() || !password.trim()){
 }
 
 try {
-  await signInWithEmailAndPassword(auth, email, password);
+  await auth.signInWithEmailAndPassword(email, password);
   
   // ✅ Login erfolgreich - onAuthStateChanged behandelt den Rest
   confetti({
@@ -559,3 +534,5 @@ window.deleteTodo = deleteTodo;
 window.changeMonth = changeMonth;
 window.goBack = goBack;
 window.loadEvents = loadEvents;
+window.loadTodos = loadTodos;
+window.openTools = openTools;
