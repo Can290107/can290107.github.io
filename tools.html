@@ -20,8 +20,8 @@
 <h1>Unsere kleinen Tools ❤️</h1>
 
 <!-- Zurück Button + Logout -->
-<button onclick="goBack()">⬅ Zurück</button>
-<button onclick="handleLogout()" style="margin-left:10px; background:#db2777;">Abmelden</button>
+<button onclick="window.goBack ? window.goBack() : window.location.href='index.html'">⬅ Zurück</button>
+<button onclick="window.handleLogout ? window.handleLogout() : window.location.href='index.html'" style="margin-left:10px; background:#db2777;">Abmelden</button>
 
 <!-- Kalender -->
 <section>
