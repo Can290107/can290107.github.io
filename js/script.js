@@ -1,192 +1,114 @@
-let currentEventKey = null;
-
 // 🔐 Einfache Benutzer-Datenbank (2 Personen)
 const users = {
   "cansu": "Prinzessin",
   "can": "Ichliebecansu"
 };
 
-let auth;
-let firebaseDb;
-let collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc;
+// Globale Firebase-Referenzen (definiert in firebase-config.js)
+// window.collection, window.addDoc, window.onSnapshot, etc. sind bereits verfügbar
 
-// Firebase Config
-const firebaseConfig = {
-  apiKey: "AIzaSyDQTZGjNqoHsjcEJ1W1DHryoXS-xpeOuVI",
-  authDomain: "geburtstag-seite.firebaseapp.com",
-  projectId: "geburtstag-seite",
-  storageBucket: "geburtstag-seite.firebasestorage.app",
-  messagingSenderId: "825693028407",
-  appId: "1:825693028407:web:55ebde2398f2f9cc907fb2"
-};
-
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-auth = firebase.auth();
-firebaseDb = firebase.firestore();
-
-// Firebase Adapter - entweder aus index.html oder tools.html
-// (keine erneute db-Deklaration) 
-
-// Wrapper-Funktionen die auf Seite definiert sein können, sonst default nutzen
-if (typeof window.collection === 'undefined') {
-  window.collection = (collectionName) => firebaseDb.collection(collectionName);
-}
-if (typeof window.addDoc === 'undefined') {
-  window.addDoc = (collectionRef, data) => collectionRef.add(data);
-}
-if (typeof window.onSnapshot === 'undefined') {
-  window.onSnapshot = (query, callback) => query.onSnapshot(callback);
-}
-if (typeof window.deleteDoc === 'undefined') {
-  window.deleteDoc = (docRef) => docRef.delete();
-}
-if (typeof window.doc === 'undefined') {
-  window.doc = (collectionName, docId) => firebaseDb.collection(collectionName).doc(docId);
-}
-if (typeof window.updateDoc === 'undefined') {
-  window.updateDoc = (docRef, data) => docRef.update(data);
-}
-if (typeof window.setDoc === 'undefined') {
-  window.setDoc = (docRef, data) => docRef.set(data);
-}
-
-// Nutze globale Funktionen
-collection = window.collection;
-addDoc = window.addDoc;
-onSnapshot = window.onSnapshot;
-deleteDoc = window.deleteDoc;
-doc = window.doc;
-updateDoc = window.updateDoc;
-setDoc = window.setDoc;
+let currentEventKey = null;
 
 // 🔥 Check Login Status beim Laden
 function checkLoginStatus() {
   const loggedInUser = localStorage.getItem("loggedInUser");
+  const loginScreen = document.getElementById("loginScreen");
+  const mainContent = document.getElementById("mainContent");
   
-  // Warte bis DOM existiert
-  setTimeout(() => {
-    const loginScreen = document.getElementById("loginScreen");
-    const mainContent = document.getElementById("mainContent");
-    
-    if (!loginScreen || !mainContent) {
-      // DOM noch nicht bereit - versuche später
-      setTimeout(checkLoginStatus, 100);
-      return;
+  if (!loginScreen || !mainContent) return; // DOM nicht bereit
+  
+  if (loggedInUser && users[loggedInUser.toLowerCase()]) {
+    // User ist im localStorage eingeloggt
+    loginScreen.style.display = "none";
+    mainContent.style.display = "block";
+    updateRelationshipCounter();
+  } else {
+    // Nicht eingeloggt
+    loginScreen.style.display = "flex";
+    mainContent.style.display = "none";
+  }
+}
+
+// Login-Status prüfen sobald DOM bereit ist
+document.addEventListener('DOMContentLoaded', function() {
+  checkLoginStatus();
+  initializeUI();
+});
+
+function initializeUI() {
+  /* ========== Musik ========== */
+  const button = document.getElementById("startBtn");
+  const music = document.getElementById("bgMusic");
+  
+  if(button && music) {
+    button.addEventListener("click", () => {
+      music.volume = 0;
+      music.play();
+      
+      let volume = 0;
+      const fade = setInterval(() => {
+        if(volume < 1) {
+          volume += 0.02;
+          music.volume = volume;
+        } else {
+          clearInterval(fade);
+        }
+      }, 100);
+      
+      button.style.display = "none";
+    });
+  }
+  
+  /* ========== AOS Animationen ========== */
+  if(typeof AOS !== "undefined") {
+    AOS.init({
+      duration: 1000,
+      once: true
+    });
+  }
+  
+  /* ========== Custom Cursor ========== */
+  const cursor = document.querySelector(".cursor");
+  if(cursor) {
+    document.addEventListener("mousemove", (e) => {
+      cursor.style.left = e.clientX + "px";
+      cursor.style.top = e.clientY + "px";
+    });
+  }
+  
+  /* ========== Partikel Hintergrund ========== */
+  if(typeof tsParticles !== "undefined") {
+    const particles = document.getElementById("particles");
+    if(particles) {
+      tsParticles.load("particles", {
+        particles: {
+          number: { value: 60 },
+          color: { value: "#ec4899" },
+          shape: { type: "circle" },
+          opacity: { value: 0.5 },
+          size: { value: 3 },
+          move: {
+            enable: true,
+            speed: 2
+          }
+        }
+      });
     }
-    
-    if (loggedInUser && users[loggedInUser.toLowerCase()]) {
-      // User ist im localStorage eingeloggt
-      loginScreen.style.display = "none";
-      mainContent.style.display = "block";
-      updateRelationshipCounter();
-    } else {
-      // Nicht eingeloggt
-      loginScreen.style.display = "flex";
-      mainContent.style.display = "none";
-    }
-  }, 100);
+  }
+  
+  /* ========== Timeline Interaktion ========== */
+  const timelineEvents = document.querySelectorAll(".timeline-event");
+  timelineEvents.forEach(event => {
+    event.addEventListener("click", () => {
+      timelineEvents.forEach(e => e.classList.remove("active"));
+      event.classList.add("active");
+      event.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    });
+  });
 }
-
-// Am Anfang prüfen
-checkLoginStatus();
-
-/* ---------------- Elemente ---------------- */
-
-const button = document.getElementById("startBtn");
-const music = document.getElementById("bgMusic");
-
-/* ---------------- Musik starten ---------------- */
-if(button && music){
-button.addEventListener("click", () => {
-
-music.volume = 0;
-music.play();
-
-let volume = 0;
-
-const fade = setInterval(() => {
-
-if(volume < 1){
-volume += 0.02;
-music.volume = volume;
-}else{
-clearInterval(fade);
-}
-
-}, 100);
-
-button.style.display = "none";
-
-});
-}
-const cursor = document.querySelector(".cursor");
-
-
-
-/* ---------------- Scroll Animation ---------------- */
-
-if(typeof AOS !== "undefined"){
-AOS.init({
-duration:1000,
-once:true
-});
-}
-
-
-/* ---------------- Custom Cursor ---------------- */
-
-if(cursor){
-
-document.addEventListener("mousemove",(e)=>{
-
-cursor.style.left = e.clientX + "px";
-cursor.style.top = e.clientY + "px";
-
-});
-
-}
-
-/* ---------------- Partikel Hintergrund ---------------- */
-
-if(typeof tsParticles !== "undefined"){
-tsParticles.load("particles", {
-particles:{
-number:{ value:60 },
-color:{ value:"#ec4899" },
-shape:{ type:"circle" },
-opacity:{ value:0.5 },
-size:{ value:3 },
-move:{
-enable:true,
-speed:2
-}
-}
-});
-}
-
-
-
-/* ---------------- Timeline Zoom ---------------- */
-
-const timelineEvents = document.querySelectorAll(".timeline-event");
-
-timelineEvents.forEach(event => {
-
-event.addEventListener("click", () => {
-
-timelineEvents.forEach(e => e.classList.remove("active"));
-
-event.classList.add("active");
-
-event.scrollIntoView({
-behavior:"smooth",
-block:"center"
-});
-
-});
-
-});
 
 
 /* ---------------- Beziehungs Counter ---------------- */
@@ -343,12 +265,12 @@ type();
 
 /*---------Login Button Event---------*/
 
-setTimeout(() => {
+document.addEventListener('DOMContentLoaded', function() {
   const loginBtn = document.getElementById("loginBtn");
-  if(loginBtn){
+  if(loginBtn) {
     loginBtn.addEventListener("click", handleLogin);
   }
-}, 100);
+});
 
 /*---------Login mit Benutzernamen---------*/
 function handleLogin() {
@@ -508,8 +430,8 @@ function closePopup(){
   document.getElementById("eventPopup").classList.add("hidden");
 }
 
-// Wait for DOM to be ready
-setTimeout(() => {
+// Event Popup Button Handler registrieren
+document.addEventListener('DOMContentLoaded', function() {
   const deleteBtn = document.getElementById("deleteEventBtn");
   const editBtn = document.getElementById("editEventBtn");
   
@@ -532,7 +454,7 @@ setTimeout(() => {
       closePopup();
     };
   }
-}, 100);
+});
 function renderCalendar(events = {}) {
 
   const grid = document.getElementById("calendarGrid");

@@ -14,6 +14,9 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
+<!-- Zentrale Firebase-Konfiguration -->
+<script src="js/firebase-config.js"></script>
+
 </head>
 
 <body>
@@ -57,39 +60,13 @@
 </section>
 
 <script>
-// 🔐 Einfacher Login Check
+// 🔐 Login-Überprüfung für tools.html
 const loggedInUser = localStorage.getItem("loggedInUser");
 
 if (!loggedInUser) {
   // Nicht angemeldet → Zurück zur Startseite
   window.location.href = "index.html";
 }
-
-// Firebase nur initialisieren wenn noch nicht passiert
-if (!firebase.apps.length) {
-  const firebaseConfig = {
-    apiKey: "AIzaSyDQTZGjNqoHsjcEJ1W1DHryoXS-xpeOuVI",
-    authDomain: "geburtstag-seite.firebaseapp.com",
-    projectId: "geburtstag-seite",
-    storageBucket: "geburtstag-seite.firebasestorage.app",
-    messagingSenderId: "825693028407",
-    appId: "1:825693028407:web:55ebde2398f2f9cc907fb2"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-}
-
-const db = firebase.firestore();
-
-// GLOBAL machen für script.js
-window.db = db;
-window.collection = (collectionName) => db.collection(collectionName);
-window.addDoc = (collectionRef, data) => collectionRef.add(data);
-window.onSnapshot = (query, callback) => query.onSnapshot(callback);
-window.deleteDoc = (docRef) => docRef.delete();
-window.doc = (collectionName, docId) => db.collection(collectionName).doc(docId);
-window.updateDoc = (docRef, data) => docRef.update(data);
-window.setDoc = (docRef, data) => docRef.set(data);
 </script>
 
 <script src="js/script.js"></script>
@@ -108,8 +85,9 @@ window.setDoc = (docRef, data) => docRef.set(data);
 </div>
 
 <script>
-// Initalisiere Tools nach Delay
-setTimeout(() => {
+// Initialisiere Tools sobald DOM bereit ist
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("Tools werden initialisiert...");
   if (window.loadTodos) {
     console.log("loadTodos wird aufgerufen...");
     loadTodos();
@@ -118,6 +96,6 @@ setTimeout(() => {
     console.log("loadEvents wird aufgerufen...");
     loadEvents();
   }
-}, 200);
+});
 </script>
 </html>
