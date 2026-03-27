@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <style>
+      .heart { 
+        fill: #ec4899; 
+        filter: drop-shadow(0 0 2px rgba(236, 72, 153, 0.8));
+      }
+    </style>
+  </defs>
+  <!-- Heart shape -->
+  <path class="heart" d="M50,85 C20,70 5,55 5,40 C5,25 15,15 25,15 C35,15 45,25 50,35 C55,25 65,15 75,15 C85,15 95,25 95,40 C95,55 80,70 50,85 Z"/>
+</svg>
