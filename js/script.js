@@ -587,10 +587,15 @@ window.handleLogout = function() {
 // 🔥 Login-Überprüfung für tools.html
 document.addEventListener('DOMContentLoaded', function() {
   const currentPage = window.location.pathname.split('/').pop();
+  console.log('Current page:', currentPage);
+  console.log('Logged in user:', localStorage.getItem('loggedInUser'));
   if (currentPage === 'tools.html') {
     const loggedInUser = localStorage.getItem('loggedInUser');
     if (!loggedInUser || !users[loggedInUser.toLowerCase()]) {
+      console.log('Redirecting to index.html');
       window.location.href = 'index.html';
+    } else {
+      console.log('User is logged in, staying on tools.html');
     }
   }
 });
