@@ -885,12 +885,12 @@ ul{
 /* -------- Mobile Optimierungen für Tools -------- */
 @media (max-width: 768px) {
   body {
-    padding-top: 80px;
+    padding-top: 100px;
   }
 
   section {
-    margin: 20px 15px !important;
-    padding-top: 10px;
+    margin: 25px 15px !important;
+    padding-top: 15px;
   }
 
   section h2 {
