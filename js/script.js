@@ -26,11 +26,11 @@ auth = firebase.auth();
 firebaseDb = firebase.firestore();
 
 // Firebase Adapter - entweder aus index.html oder tools.html
-const db = firebaseDb;
+// (keine erneute db-Deklaration) 
 
 // Wrapper-Funktionen die auf Seite definiert sein können, sonst default nutzen
 if (typeof window.collection === 'undefined') {
-  window.collection = (collectionName) => db.collection(collectionName);
+  window.collection = (collectionName) => firebaseDb.collection(collectionName);
 }
 if (typeof window.addDoc === 'undefined') {
   window.addDoc = (collectionRef, data) => collectionRef.add(data);
@@ -42,7 +42,7 @@ if (typeof window.deleteDoc === 'undefined') {
   window.deleteDoc = (docRef) => docRef.delete();
 }
 if (typeof window.doc === 'undefined') {
-  window.doc = (collectionName, docId) => db.collection(collectionName).doc(docId);
+  window.doc = (collectionName, docId) => firebaseDb.collection(collectionName).doc(docId);
 }
 if (typeof window.updateDoc === 'undefined') {
   window.updateDoc = (docRef, data) => docRef.update(data);
