@@ -584,6 +584,12 @@ function renderCalendar(events = {}) {
 
     if(hasEvent) div.classList.add("has-event");
 
+    // 🔥 Heutigen Tag hervorheben
+    const today = new Date();
+    if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
+      div.classList.add("today");
+    }
+
     div.textContent = day;
 
    div.onclick = () => {
