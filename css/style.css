@@ -881,3 +881,84 @@ ul{
   margin:0;
   padding:10px;
 }
+
+/* -------- Mobile Optimierungen für Tools -------- */
+@media (max-width: 768px) {
+  body {
+    padding-top: 60px;
+  }
+
+  section {
+    margin: 15px 15px !important;
+  }
+
+  section h2 {
+    font-size: 20px;
+    margin: 10px 0 15px 0;
+  }
+
+  /* Kalender kompakt */
+  .calendar {
+    padding: 12px;
+  }
+
+  .calendar-header {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .calendar-grid {
+    gap: 6px;
+    margin-top: 12px;
+  }
+
+  .calendar-day {
+    padding: 8px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+
+  .arrow-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  #calendarTitle {
+    font-size: 16px;
+  }
+
+  /* Todo kompakt */
+  .todo-container {
+    margin-top: 12px;
+  }
+
+  .todo-input-row {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .todo-input-row input {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  .todo-input-row button {
+    padding: 10px 14px;
+    font-size: 16px;
+  }
+
+  .todo-list {
+    gap: 10px;
+  }
+
+  .todo-item {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .todo-item button {
+    padding: 6px 10px;
+    font-size: 16px;
+  }
+}
