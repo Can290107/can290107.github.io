@@ -17,11 +17,14 @@
 
 <body>
 
-<h1>Unsere kleinen Tools ❤️</h1>
+<nav class="navbar">
+  <h2>❤️</h2>
+  <div>
+    <button onclick="window.goBack ? window.goBack() : window.location.href='index.html'">⬅ Zurück</button>
+  </div>
+</nav>
 
-<!-- Zurück Button + Logout -->
-<button onclick="window.goBack ? window.goBack() : window.location.href='index.html'">⬅ Zurück</button>
-<button onclick="window.handleLogout ? window.handleLogout() : window.location.href='index.html'" style="margin-left:10px; background:#db2777;">Abmelden</button>
+<h1>Unsere kleinen Tools ❤️</h1>
 
 <!-- Kalender -->
 <section>
@@ -86,12 +89,6 @@ window.deleteDoc = (docRef) => docRef.delete();
 window.doc = (collectionName, docId) => db.collection(collectionName).doc(docId);
 window.updateDoc = (docRef, data) => docRef.update(data);
 window.setDoc = (docRef, data) => docRef.set(data);
-
-// Logout Funktion
-window.handleLogout = function() {
-  localStorage.removeItem("loggedInUser");
-  window.location.href = "index.html";
-};
 </script>
 
 <script src="js/script.js"></script>
