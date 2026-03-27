@@ -235,19 +235,84 @@ const textElement = document.getElementById("letterText");
 
 const text = `Hey ❤️
 
-Ich wollte dir dieses Jahr nicht einfach nur ein Geschenk geben.
-Ich wollte dir etwas geben, das zeigt wie viel mir unsere Zeit bedeutet.
+ich habe lange darüber nachgedacht, was ich dir schreiben soll.
+Und je mehr ich darüber nachgedacht habe,
+desto mehr habe ich gemerkt,
+dass es eigentlich keine richtigen Worte dafür gibt.
 
-Vom ersten Moment unserer Nachrichten,
-über unser erstes Treffen im Park,
-bis zu all den Momenten danach.
+Weil das, was ich für dich empfinde,
+lässt sich nicht einfach erklären.
+Es ist nicht nur ein Gefühl.
+Es ist etwas, das einfach da ist 
+die ganze Zeit.
 
-Jeder einzelne Moment mit dir ist für mich etwas Besonderes.
+Du bist für mich nicht nur meine Freundin.
+Du bist die Person,
+bei der alles irgendwie still wird.
 
-Danke, dass du mein Leben so viel schöner machst.
+Egal wie mein Tag war,
+egal was in meinem Kopf los ist 
+wenn ich an dich denke,
+wird alles ruhiger.
+
+Und ich glaube, genau das ist das,
+was dich für mich so besonders macht.
+
+Du bist nicht laut,
+nicht aufdringlich,
+nicht kompliziert.
+
+Und trotzdem schaffst du es,
+mehr in mir auszulösen als alles andere.
+
+Ich fühle mich bei dir einfach richtig.
+
+So, als müsste ich nichts erklären.
+So, als würde alles genau so passen, wie es ist.
+
+Und ich habe das Gefühl,
+dass ich durch dich Dinge gelernt habe,
+die ich vorher nie wirklich verstanden habe.
+
+Wie es ist, jemandem wirklich zu vertrauen.
+Wie es ist, sich wirklich wohlzufühlen.
+Und wie es ist,
+einen Menschen nicht mehr aus seinem Leben wegdenken zu können.
+
+Du bist für mich zu einem festen Teil geworden.
+Nicht irgendwann,
+sondern einfach so.
+
+Und genau das macht mir manchmal bewusst,
+wie besonders das alles ist.
+
+Weil nichts davon selbstverständlich ist.
+
+Ich bin einfach dankbar.
+Für dich.
+Für alles, was du bist.
+Für die Art, wie du denkst,
+wie du fühlst
+und wie du mit mir umgehst.
+
+Und ich merke,
+dass ich mir genau das immer gewünscht habe,
+ohne es richtig benennen zu können.
+
+Ich kann dir nicht versprechen,
+dass immer alles perfekt sein wird.
+
+Aber ich kann dir sagen,
+dass ich dich immer genauso ehrlich meinen werde,
+wie ich es jetzt tue.
+
+Und dass ich dich niemals als selbstverständlich sehen werde.
 
 Alles Gute zum Geburtstag ❤️
+
 Ich liebe dich.
+Nicht nur heute,
+sondern jeden einzelnen Tag.
 `;
 
 letter.classList.add("show");
