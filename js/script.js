@@ -583,3 +583,14 @@ window.handleLogout = function() {
   localStorage.removeItem("loggedInUser");
   window.location.href = "index.html";
 };
+
+// 🔥 Login-Überprüfung für tools.html
+document.addEventListener('DOMContentLoaded', function() {
+  const currentPage = window.location.pathname.split('/').pop();
+  if (currentPage === 'tools.html') {
+    const loggedInUser = localStorage.getItem('loggedInUser');
+    if (!loggedInUser || !users[loggedInUser.toLowerCase()]) {
+      window.location.href = 'index.html';
+    }
+  }
+});
