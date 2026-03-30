@@ -441,10 +441,9 @@ padding:8px 12px;
 
 .relationship-counter{
   position: fixed;
-  top: 90px;
-  right: 20px;
-  left: auto;
-  transform: none;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
 
   display: flex;
   flex-direction: column;

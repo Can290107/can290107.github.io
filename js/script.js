@@ -166,7 +166,7 @@ origin:{y:0.6}
 const letter = document.getElementById("loveLetter");
 const textElement = document.getElementById("letterText");
 
-const text = `Hey ❤️
+const text = `Hallo Cansu, 
 
 ich habe lange darüber nachgedacht, was ich dir schreiben soll.
 Und je mehr ich darüber nachgedacht habe,
