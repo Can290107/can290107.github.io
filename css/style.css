@@ -441,9 +441,10 @@ padding:8px 12px;
 
 .relationship-counter{
   position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 90px;
+  right: 20px;
+  left: auto;
+  transform: none;
 
   display: flex;
   flex-direction: column;
@@ -528,31 +529,9 @@ color:#ec4899;
 
 #letterText{
 
-line-height:1.8;
+line-height:1.7;
 
 font-size:18px;
-
-}
-
-#letterText p{
-
-margin-bottom:20px;
-
-}
-
-#letterText strong{
-
-color:#ec4899;
-
-font-weight:600;
-
-}
-
-#letterText em{
-
-font-style:italic;
-
-color:#f97316;
 
 }
 
