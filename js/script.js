@@ -12,18 +12,29 @@ let currentEventKey = null;
 // 🔥 Check Login Status beim Laden
 function checkLoginStatus() {
   const loggedInUser = localStorage.getItem("loggedInUser");
+  const loginTimestamp = localStorage.getItem("loginTimestamp");
   const loginScreen = document.getElementById("loginScreen");
   const mainContent = document.getElementById("mainContent");
-  
+
   if (!loginScreen || !mainContent) return; // DOM nicht bereit
-  
+
+  // Prüfe ob Session abgelaufen (1 Tag = 86400000 ms)
+  const SESSION_DURATION = 1 * 24 * 60 * 60 * 1000; // 1 Tag in Millisekunden
+  const now = Date.now();
+
+  if (loginTimestamp && (now - parseInt(loginTimestamp)) > SESSION_DURATION) {
+    // Session abgelaufen - automatisch ausloggen
+    handleLogout();
+    return;
+  }
+
   if (loggedInUser && users[loggedInUser.toLowerCase()]) {
-    // User ist im localStorage eingeloggt
+    // User ist im localStorage eingeloggt und Session gültig
     loginScreen.style.display = "none";
     mainContent.style.display = "block";
     updateRelationshipCounter();
   } else {
-    // Nicht eingeloggt
+    // Nicht eingeloggt oder Session abgelaufen
     loginScreen.style.display = "flex";
     mainContent.style.display = "none";
   }
@@ -300,6 +311,7 @@ function handleLogin() {
 
   // ✅ Login erfolgreich!
   localStorage.setItem("loggedInUser", username);
+  localStorage.setItem("loginTimestamp", Date.now().toString()); // Timestamp speichern
   
   // Confetti
   confetti({
@@ -574,6 +586,7 @@ window.openTools = openTools;
 window.handleLogin = handleLogin;
 window.handleLogout = function() {
   localStorage.removeItem("loggedInUser");
+  localStorage.removeItem("loginTimestamp"); // Timestamp auch löschen
   window.location.href = "index.html";
 };
 
