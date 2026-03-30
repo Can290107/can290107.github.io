@@ -166,87 +166,85 @@ origin:{y:0.6}
 const letter = document.getElementById("loveLetter");
 const textElement = document.getElementById("letterText");
 
-const text = `Hey ❤️
+const text = `<p><strong>Hallo Cansu</strong></p>
 
-ich habe lange darüber nachgedacht, was ich dir schreiben soll.
-Und je mehr ich darüber nachgedacht habe,
-desto mehr habe ich gemerkt,
-dass es eigentlich keine richtigen Worte dafür gibt.
+<p>ich habe lange darüber nachgedacht, was ich dir schreiben soll.<br>
+Und je mehr ich darüber nachgedacht habe,<br>
+desto mehr habe ich gemerkt,<br>
+dass es eigentlich keine richtigen Worte dafür gibt.</p>
 
-Weil das, was ich für dich empfinde,
-lässt sich nicht einfach erklären.
-Es ist nicht nur ein Gefühl.
-Es ist etwas, das einfach da ist 
-die ganze Zeit.
+<p>Weil das, was ich für dich empfinde,<br>
+lässt sich nicht einfach erklären.<br>
+Es ist nicht nur ein Gefühl.<br>
+Es ist etwas, das einfach da ist die ganze Zeit.</p>
 
-Du bist für mich nicht nur meine Freundin.
-Du bist die Person,
-bei der alles irgendwie still wird.
+<p><strong>Du bist für mich nicht nur meine Freundin.</strong><br>
+Du bist die Person,<br>
+bei der alles irgendwie still wird.</p>
 
-Egal wie mein Tag war,
-egal was in meinem Kopf los ist 
-wenn ich an dich denke,
-wird alles ruhiger.
+<p>Egal wie mein Tag war,<br>
+egal was in meinem Kopf los ist <br>
+wenn ich an dich denke,<br>
+wird alles ruhiger.</p>
 
-Und ich glaube, genau das ist das,
-was dich für mich so besonders macht.
+<p>Und ich glaube, genau das ist das,<br>
+was dich für mich so besonders macht.</p>
 
-Du bist nicht laut,
-nicht aufdringlich,
-nicht kompliziert.
+<p>Du bist nicht laut,<br>
+nicht aufdringlich,<br>
+nicht kompliziert.</p>
 
-Und trotzdem schaffst du es,
-mehr in mir auszulösen als alles andere.
+<p>Und trotzdem schaffst du es,<br>
+mehr in mir auszulösen als alles andere.</p>
 
-Ich fühle mich bei dir einfach richtig.
+<p>Ich fühle mich bei dir einfach richtig.</p>
 
-So, als müsste ich nichts erklären.
-So, als würde alles genau so passen, wie es ist.
+<p>So, als müsste ich nichts erklären.<br>
+So, als würde alles genau so passen, wie es ist.</p>
 
-Und ich habe das Gefühl,
-dass ich durch dich Dinge gelernt habe,
-die ich vorher nie wirklich verstanden habe.
+<p>Und ich habe das Gefühl,<br>
+dass ich durch dich Dinge gelernt habe,<br>
+die ich vorher nie wirklich verstanden habe.</p>
 
-Wie es ist, jemandem wirklich zu vertrauen.
-Wie es ist, sich wirklich wohlzufühlen.
-Und wie es ist,
-einen Menschen nicht mehr aus seinem Leben wegdenken zu können.
+<p>Wie es ist, jemandem wirklich zu vertrauen.<br>
+Wie es ist, sich wirklich wohlzufühlen.<br>
+Und wie es ist,<br>
+einen Menschen nicht mehr aus seinem Leben wegdenken zu können.</p>
 
-Du bist für mich zu einem festen Teil geworden.
-Nicht irgendwann,
-sondern einfach so.
+<p><strong>Du bist für mich zu einem festen Teil geworden.</strong><br>
+Nicht irgendwann,<br>
+sondern einfach so.</p>
 
-Und genau das macht mir manchmal bewusst,
-wie besonders das alles ist.
+<p>Und genau das macht mir manchmal bewusst,<br>
+wie besonders das alles ist.</p>
 
-Weil nichts davon selbstverständlich ist.
+<p>Weil nichts davon selbstverständlich ist.</p>
 
-Ich bin einfach dankbar.
-Für dich.
-Für alles, was du bist.
-Für die Art, wie du denkst,
-wie du fühlst
-und wie du mit mir umgehst.
+<p>Ich bin einfach dankbar.<br>
+Für dich.<br>
+Für alles, was du bist.<br>
+Für die Art, wie du denkst,<br>
+wie du fühlst<br>
+und wie du mit mir umgehst.</p>
 
-Und ich merke,
-dass ich mir genau das immer gewünscht habe,
-ohne es richtig benennen zu können.
+<p>Und ich merke,<br>
+dass ich mir genau das immer gewünscht habe,<br>
+ohne es richtig benennen zu können.</p>
 
-Ich kann dir nicht versprechen,
-dass immer alles perfekt sein wird.
+<p>Ich kann dir nicht versprechen,<br>
+dass immer alles perfekt sein wird.</p>
 
-Aber ich kann dir sagen,
-dass ich dich immer genauso ehrlich meinen werde,
-wie ich es jetzt tue.
+<p>Aber ich kann dir sagen,<br>
+dass ich dich immer genauso ehrlich meinen werde,<br>
+wie ich es jetzt tue.</p>
 
-Und dass ich dich niemals als selbstverständlich sehen werde.
+<p>Und dass ich dich niemals als selbstverständlich sehen werde.</p>
 
-Alles Gute zum Geburtstag ❤️
+<p><strong>Alles Gute zum Geburtstag ❤️</strong></p>
 
-Ich liebe dich.
-Nicht nur heute,
-sondern jeden einzelnen Tag.
-`;
+<p><em>Ich liebe dich.<br>
+Nicht nur heute,<br>
+sondern jeden einzelnen Tag.</em></p>`;
 
 letter.classList.add("show");
 
@@ -255,17 +253,14 @@ textElement.innerHTML = "";
 let i = 0;
 
 function type(){
-
-if(i < text.length){
-
-textElement.innerHTML += text.charAt(i);
-
-i++;
-
-setTimeout(type,40);
-
-}
-
+  if(i < text.length){
+    // HTML-sichere Typewriter-Animation
+    const char = text.charAt(i);
+    textElement.innerHTML += char;
+    
+    i++;
+    setTimeout(type, char === '<' ? 0 : 40); // HTML-Tags sofort, Text langsam
+  }
 }
 
 type();

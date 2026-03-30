@@ -528,9 +528,31 @@ color:#ec4899;
 
 #letterText{
 
-line-height:1.7;
+line-height:1.8;
 
 font-size:18px;
+
+}
+
+#letterText p{
+
+margin-bottom:20px;
+
+}
+
+#letterText strong{
+
+color:#ec4899;
+
+font-weight:600;
+
+}
+
+#letterText em{
+
+font-style:italic;
+
+color:#f97316;
 
 }
 
