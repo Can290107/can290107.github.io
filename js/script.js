@@ -250,29 +250,42 @@ letter.classList.add("show");
 
 textElement.innerHTML = "";
 
-let i = 0;
+// Temporäres Element für sauberes HTML-Parsing
+const tempDiv = document.createElement("div");
+tempDiv.innerHTML = text;
+tempDiv.style.display = "none";
+document.body.appendChild(tempDiv);
 
-// HTML-sichere Typewriter-Animation
+let i = 0;
+const textNodes = [];
+const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT, null, false);
+
+while (walker.nextNode()) {
+  textNodes.push(walker.currentNode);
+}
+
+// Typewriter-Animation nur für Text-Inhalte
 function type() {
-  if (i < text.length) {
-    const char = text.charAt(i);
+  if (i < textNodes.length) {
+    const node = textNodes[i];
+    const text = node.textContent;
+    let charIndex = 0;
     
-    if (char === '<') {
-      // HTML-Tag komplett hinzufügen
-      const tagEnd = text.indexOf('>', i);
-      if (tagEnd !== -1) {
-        const tag = text.substring(i, tagEnd + 1);
-        textElement.innerHTML += tag;
-        i = tagEnd + 1;
-        setTimeout(type, 0); // Tags sofort
-        return;
+    function typeChar() {
+      if (charIndex < text.length) {
+        node.textContent = text.substring(0, charIndex + 1);
+        charIndex++;
+        setTimeout(typeChar, 40);
+      } else {
+        i++;
+        setTimeout(type, 100); // Pause zwischen Text-Blöcken
       }
     }
     
-    // Normaler Text
-    textElement.innerHTML += char;
-    i++;
-    setTimeout(type, 40); // Text langsam
+    typeChar();
+  } else {
+    // Animation fertig - temporäres Element entfernen
+    document.body.removeChild(tempDiv);
   }
 }
 
