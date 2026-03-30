@@ -168,7 +168,7 @@ const textElement = document.getElementById("letterText");
 
 const text = `<p><strong>Hallo Cansu</strong></p>
 
-<p>ich habe lange darüber nachgedacht, was ich dir schreiben soll.<br>
+<p> ich habe lange darüber nachgedacht, was ich dir schreiben soll.<br>
 Und je mehr ich darüber nachgedacht habe,<br>
 desto mehr habe ich gemerkt,<br>
 dass es eigentlich keine richtigen Worte dafür gibt.</p>
@@ -252,14 +252,27 @@ textElement.innerHTML = "";
 
 let i = 0;
 
-function type(){
-  if(i < text.length){
-    // HTML-sichere Typewriter-Animation
+// HTML-sichere Typewriter-Animation
+function type() {
+  if (i < text.length) {
     const char = text.charAt(i);
-    textElement.innerHTML += char;
     
+    if (char === '<') {
+      // HTML-Tag komplett hinzufügen
+      const tagEnd = text.indexOf('>', i);
+      if (tagEnd !== -1) {
+        const tag = text.substring(i, tagEnd + 1);
+        textElement.innerHTML += tag;
+        i = tagEnd + 1;
+        setTimeout(type, 0); // Tags sofort
+        return;
+      }
+    }
+    
+    // Normaler Text
+    textElement.innerHTML += char;
     i++;
-    setTimeout(type, char === '<' ? 0 : 40); // HTML-Tags sofort, Text langsam
+    setTimeout(type, 40); // Text langsam
   }
 }
 
