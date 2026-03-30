@@ -248,48 +248,8 @@ sondern jeden einzelnen Tag.</em></p>`;
 
 letter.classList.add("show");
 
-textElement.innerHTML = "";
-
-// Temporäres Element für sauberes HTML-Parsing
-const tempDiv = document.createElement("div");
-tempDiv.innerHTML = text;
-tempDiv.style.display = "none";
-document.body.appendChild(tempDiv);
-
-let i = 0;
-const textNodes = [];
-const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT, null, false);
-
-while (walker.nextNode()) {
-  textNodes.push(walker.currentNode);
-}
-
-// Typewriter-Animation nur für Text-Inhalte
-function type() {
-  if (i < textNodes.length) {
-    const node = textNodes[i];
-    const text = node.textContent;
-    let charIndex = 0;
-    
-    function typeChar() {
-      if (charIndex < text.length) {
-        node.textContent = text.substring(0, charIndex + 1);
-        charIndex++;
-        setTimeout(typeChar, 40);
-      } else {
-        i++;
-        setTimeout(type, 100); // Pause zwischen Text-Blöcken
-      }
-    }
-    
-    typeChar();
-  } else {
-    // Animation fertig - temporäres Element entfernen
-    document.body.removeChild(tempDiv);
-  }
-}
-
-type();
+// HTML sofort setzen - keine Animation mehr nötig
+textElement.innerHTML = text;
 
 }
 
