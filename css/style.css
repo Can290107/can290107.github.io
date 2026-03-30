@@ -425,8 +425,13 @@ font-size:16px;
 
 top:auto;
 
+right:auto;
 
-right:50%;
+bottom:20px;
+
+left:50%;
+
+transform:translateX(-50%);
 
 
 font-size:12px;
