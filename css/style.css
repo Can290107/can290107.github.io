@@ -1258,15 +1258,7 @@ ul{
   transition:width 0.2s ease;
 }
 
-.upload-note{
-  margin-top:18px;
-  text-align:left;
-  color:rgba(255,255,255,0.78);
-}
 
-.upload-note p{
-  margin:8px 0;
-}
 
 /* -------- Mobile Optimierungen für Tools -------- */
 @media (max-width: 768px) {

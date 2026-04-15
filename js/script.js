@@ -24,6 +24,8 @@ let pageFeaturesInitialized = false;
 let galleryMonths = [];
 let galleryItemsCache = {};
 let gallerySource = "storage";
+let galleryEmptyStateTitle = "Noch keine Erinnerungen fuer diesen Monat";
+let galleryEmptyStateMessage = "Lade den Monatsordner in Firebase Storage hoch oder nutze fuer lokal gespeicherte Dateien das bestehende Galerie-Manifest als Fallback.";
 
 document.addEventListener("DOMContentLoaded", function() {
   bindLoginForm();
@@ -833,6 +835,10 @@ function getFallbackGalleryItems(monthId) {
   return Array.isArray(items[monthId]) ? items[monthId] : [];
 }
 
+function canUseHostedGalleryManifest() {
+  return isLocalDevelopmentHost();
+}
+
 function isLocalDevelopmentHost() {
   const hostname = window.location.hostname;
   return window.location.protocol === "file:" || hostname === "localhost" || hostname === "127.0.0.1";
@@ -973,6 +979,27 @@ function showGalleryLoading(message) {
   galleryGrid.innerHTML = `<div class="gallery-loader">${message}</div>`;
 }
 
+function setGalleryEmptyStateContent(title, message) {
+  galleryEmptyStateTitle = title;
+  galleryEmptyStateMessage = message;
+
+  const emptyState = document.getElementById("galleryEmptyState");
+  if (!emptyState) {
+    return;
+  }
+
+  const titleElement = emptyState.querySelector("h3");
+  const messageElement = emptyState.querySelector("p");
+
+  if (titleElement) {
+    titleElement.textContent = title;
+  }
+
+  if (messageElement) {
+    messageElement.textContent = message;
+  }
+}
+
 async function getStorageGalleryMonths() {
   if (!storageRefFactory) {
     return [];
@@ -1054,7 +1081,10 @@ async function getStorageGalleryItems(monthId) {
 async function initializeGalleryPage() {
   const monthTabs = document.getElementById("galleryMonthTabs");
   const galleryGrid = document.getElementById("galleryGrid");
-  const fallbackConfig = getFallbackGalleryConfig();
+  const canUseManifest = canUseHostedGalleryManifest();
+  const fallbackConfig = canUseManifest
+    ? getFallbackGalleryConfig()
+    : { months: [], items: {} };
 
   if (!monthTabs || !galleryGrid) {
     return;
@@ -1063,13 +1093,19 @@ async function initializeGalleryPage() {
   galleryMonths = [];
   galleryItemsCache = {};
   gallerySource = "storage";
+  setGalleryEmptyStateContent(
+    "Noch keine Erinnerungen fuer diesen Monat",
+    canUseManifest
+      ? "Lade den Monatsordner in Firebase Storage hoch oder nutze fuer lokal gespeicherte Dateien das bestehende Galerie-Manifest als Fallback."
+      : "Online werden nur Dateien aus Firebase Storage angezeigt. Lokale assets/gallery-Dateien sind im Hosting absichtlich nicht verfuegbar."
+  );
 
   showGalleryLoading("Monate werden geladen...");
   showGalleryEmptyState(false);
 
   try {
     const storageMonths = await getStorageGalleryMonths();
-    if (storageMonths.length && isLocalDevelopmentHost() && fallbackConfig.months.length) {
+    if (storageMonths.length && canUseManifest && fallbackConfig.months.length) {
       galleryMonths = mergeGalleryMonths(storageMonths, fallbackConfig.months);
       gallerySource = "hybrid";
     } else if (storageMonths.length) {
@@ -1078,11 +1114,25 @@ async function initializeGalleryPage() {
     } else {
       galleryMonths = fallbackConfig.months;
       gallerySource = fallbackConfig.months.length ? "manifest" : "storage";
+
+      if (!galleryMonths.length && !canUseManifest) {
+        setGalleryEmptyStateContent(
+          "Online-Galerie noch leer",
+          "Es wurden noch keine Bilder oder Videos nach Firebase Storage hochgeladen. Oeffne die Upload-Seite und lade die Monatsordner dort hoch."
+        );
+      }
     }
   } catch (error) {
     console.error("Galerie aus Firebase Storage konnte nicht geladen werden:", error);
     galleryMonths = fallbackConfig.months;
     gallerySource = fallbackConfig.months.length ? "manifest" : "storage";
+
+    if (!canUseManifest) {
+      setGalleryEmptyStateContent(
+        "Firebase Storage konnte nicht geladen werden",
+        "Die Online-Galerie konnte nicht aus Firebase Storage gelesen werden. Bitte pruefe Login, Storage Rules und ob der Bucket korrekt eingerichtet ist."
+      );
+    }
   }
 
   renderGalleryMonthTabs();
@@ -1137,7 +1187,7 @@ async function renderGalleryItems(monthId) {
   showGalleryLoading("Erinnerungen werden geladen...");
 
   let items = [];
-  const fallbackItems = getFallbackGalleryItems(monthId);
+  const fallbackItems = canUseHostedGalleryManifest() ? getFallbackGalleryItems(monthId) : [];
 
   try {
     if (gallerySource === "storage") {
@@ -1153,6 +1203,11 @@ async function renderGalleryItems(monthId) {
     items = fallbackItems;
     if (items.length) {
       gallerySource = "manifest";
+    } else if (!canUseHostedGalleryManifest()) {
+      setGalleryEmptyStateContent(
+        "Dateien konnten nicht geladen werden",
+        "Die Medien dieses Monats konnten nicht aus Firebase Storage geladen werden. Bitte pruefe, ob die Dateien dort hochgeladen wurden und ob dein Konto Zugriff hat."
+      );
     }
   }
 
@@ -1248,6 +1303,17 @@ function showGalleryEmptyState(isEmpty) {
   const emptyState = document.getElementById("galleryEmptyState");
   if (!emptyState) {
     return;
+  }
+
+  const titleElement = emptyState.querySelector("h3");
+  const messageElement = emptyState.querySelector("p");
+
+  if (titleElement) {
+    titleElement.textContent = galleryEmptyStateTitle;
+  }
+
+  if (messageElement) {
+    messageElement.textContent = galleryEmptyStateMessage;
   }
 
   emptyState.classList.toggle("hidden", !isEmpty);
