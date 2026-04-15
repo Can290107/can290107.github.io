@@ -13,18 +13,20 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
 <!-- Zentrale Firebase-Konfiguration -->
 <script src="js/firebase-config.js"></script>
 
 </head>
 
-<body>
+<body class="private-page auth-pending">
 
 <nav class="navbar">
   <h2>❤️</h2>
-  <div>
+  <div class="navbar-actions">
     <button onclick="window.goBack ? window.goBack() : window.location.href='index.html'">← Zurück</button>
+    <button onclick="window.openGallery ? window.openGallery() : window.location.href='gallery.html'">Momente</button>
   </div>
 </nav>
 
@@ -59,15 +61,11 @@
 </div>
 </section>
 
-<script>
-// 🔐 Login-Überprüfung für tools.html
-const loggedInUser = localStorage.getItem("loggedInUser");
-
-if (!loggedInUser) {
-  // Nicht angemeldet → Zurück zur Startseite
-  window.location.href = "index.html";
-}
-</script>
+<section>
+  <h2>Galerie Upload ☁️</h2>
+  <p>Monatsordner direkt in Firebase Storage hochladen.</p>
+  <button onclick="openUpload()">Upload öffnen</button>
+</section>
 
 <script src="js/script.js"></script>
 
@@ -84,18 +82,5 @@ if (!loggedInUser) {
   </div>
 </div>
 
-<script>
-// Initialisiere Tools sobald DOM bereit ist
-document.addEventListener('DOMContentLoaded', function() {
-  console.log("Tools werden initialisiert...");
-  if (window.loadTodos) {
-    console.log("loadTodos wird aufgerufen...");
-    loadTodos();
-  }
-  if (window.loadEvents) {
-    console.log("loadEvents wird aufgerufen...");
-    loadEvents();
-  }
-});
-</script>
+</body>
 </html>

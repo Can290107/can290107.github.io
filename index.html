@@ -20,9 +20,10 @@
 <body>
     <nav class="navbar">
   <h2>❤️</h2>
-  <div>
+  <div class="navbar-actions">
+    <button onclick="openGallery()">Momente</button>
     <button onclick="openTools()">Tools</button>
-    <button onclick="handleLogout()" style="margin-left:10px; background:#db2777;">Abmelden</button>
+    <button class="logout-btn" onclick="handleLogout()">Abmelden</button>
   </div>
 </nav>
 
@@ -266,6 +267,7 @@ Starten 🎉
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
 <!-- Zentrale Firebase-Konfiguration -->
 <script src="js/firebase-config.js"></script>
