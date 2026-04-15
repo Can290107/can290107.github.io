@@ -32,7 +32,7 @@ align-items:center;
 
 text-align:center;
 overflow-x: hidden;
-width:100vw;
+width:100%;
 
 }
 
@@ -1350,8 +1350,8 @@ ul{
   }
 
   .memory-gallery-section {
-    width: 100%;
-    margin: 120px auto 40px;
+    width: auto;
+    margin: 120px 15px 40px !important;
     padding: 28px 18px;
   }
 
@@ -1391,8 +1391,8 @@ ul{
   }
 
   .upload-section {
-    width: 100%;
-    margin: 120px auto 40px;
+    width: auto;
+    margin: 120px 15px 40px !important;
     padding: 28px 18px;
   }
 
