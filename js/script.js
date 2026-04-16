@@ -467,20 +467,19 @@ function showLetter() {
 
   const text = `Hallo Cansu,
 
-ich habe lange darueber nachgedacht, was ich dir schreiben soll.
-Und je mehr ich darueber nachgedacht habe,
+ich habe lange darüber nachgedacht, was ich dir schreiben soll.
+Und je mehr ich darüber nachgedacht habe,
 desto mehr habe ich gemerkt,
-dass es eigentlich keine richtigen Worte dafuer gibt.
+dass es eigentlich keine richtigen Worte dafür gibt.
 
-Weil das, was ich fuer dich empfinde,
-laesst sich nicht einfach erklaeren.
-Es ist nicht nur ein Gefuehl.
-Es ist etwas, das einfach da ist
-die ganze Zeit.
+Weil das, was ich für dich empfinde,
+lässt sich nicht einfach erklären.
+Es ist nicht nur ein Gefühl.
+Es ist etwas, das ich die ganze Zeit fühle.
 
-Du bist fuer mich nicht nur meine Freundin.
+Du bist für mich nicht nur meine Freundin.
 Du bist die Person,
-bei der alles irgendwie still wird.
+bei der ich meine Ruhe finde.
 
 Egal wie mein Tag war,
 egal was in meinem Kopf los ist
@@ -488,57 +487,57 @@ wenn ich an dich denke,
 wird alles ruhiger.
 
 Und ich glaube, genau das ist das,
-was dich fuer mich so besonders macht.
+was dich für mich so besonders macht.
 
-Du bist nicht laut,
+Du bist nicht verschlossen, 
 nicht aufdringlich,
 nicht kompliziert.
 
 Und trotzdem schaffst du es,
-mehr in mir ausgeloest zu haben als alles andere.
+Gefühle in mir ausgelöst zu haben die ich selber erst 
+verstehen muss.
 
-Ich fuehle mich bei dir einfach richtig.
+Ich fühle mich bei dir einfach richtig.
 
-So, als muesste ich nichts erklaeren.
-So, als wuerde alles genau so passen, wie es ist.
+So, als müsste ich nichts erklären und
+als würde alles genau so passen, wie es ist.
 
-Und ich habe das Gefuehl,
+Und ich habe das Gefühl,
 dass ich durch dich Dinge gelernt habe,
 die ich vorher nie wirklich verstanden habe.
 
 Wie es ist, jemandem wirklich zu vertrauen.
-Wie es ist, sich wirklich wohlzufuehlen.
+Wie es ist, sich wirklich wohlzufühlen.
 Und wie es ist,
-einen Menschen nicht mehr aus seinem Leben wegdenken zu koennen.
+einen Menschen nicht mehr aus seinem Leben wegdenken zu können.
 
-Du bist fuer mich zu einem festen Teil geworden.
-Nicht irgendwann,
-sondern einfach so.
+Du bist für mich zu einem festen Teil geworden.
+Dieses Gefühl würde ich als Liebe beschreiben, glaube ich.
 
 Und genau das macht mir manchmal bewusst,
 wie besonders das alles ist.
 
-Weil nichts davon selbstverstaendlich ist.
+Weil nichts davon selbstverständlich ist.
 
 Ich bin einfach dankbar.
-Fuer dich.
-Fuer alles, was du bist.
-Fuer die Art, wie du denkst,
-wie du fuehlst
+Für dich.
+Für alles, was du bist.
+Für die Art, wie du denkst,
+wie du fühlst
 und wie du mit mir umgehst.
 
 Und ich merke,
-dass ich mir genau das immer gewuenscht habe,
-ohne es richtig benennen zu koennen.
+dass ich mir genau das immer gewünscht habe,
+ohne es wirklich zu wissen.
 
 Ich kann dir nicht versprechen,
 dass immer alles perfekt sein wird.
 
 Aber ich kann dir sagen,
-dass ich dich immer genauso ehrlich meinen werde,
+dass ich es mit dir immer genauso ehrlich meinen werde,
 wie ich es jetzt tue.
 
-Und dass ich dich niemals als selbstverstaendlich sehen werde.
+Und dass ich dich niemals als selbstverständlich sehen werde.
 
 Alles Gute zum Geburtstag ❤️
 
