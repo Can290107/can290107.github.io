@@ -1191,6 +1191,13 @@ ul{
   color:rgba(255,255,255,0.82);
 }
 
+.upload-field-hint{
+  margin:0;
+  font-size:12px;
+  line-height:1.5;
+  color:rgba(255,255,255,0.56);
+}
+
 .upload-field input,
 .upload-field select{
   width:100%;
@@ -1240,6 +1247,12 @@ ul{
 
 .upload-status.error{
   color:#fda4af;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .upload-field-desktop {
+    display:none;
+  }
 }
 
 .upload-progress{

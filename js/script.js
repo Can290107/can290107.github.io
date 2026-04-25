@@ -467,19 +467,20 @@ function showLetter() {
 
   const text = `Hallo Cansu,
 
-ich habe lange darüber nachgedacht, was ich dir schreiben soll.
-Und je mehr ich darüber nachgedacht habe,
+ich habe lange darueber nachgedacht, was ich dir schreiben soll.
+Und je mehr ich darueber nachgedacht habe,
 desto mehr habe ich gemerkt,
-dass es eigentlich keine richtigen Worte dafür gibt.
+dass es eigentlich keine richtigen Worte dafuer gibt.
 
-Weil das, was ich für dich empfinde,
-lässt sich nicht einfach erklären.
-Es ist nicht nur ein Gefühl.
-Es ist etwas, das ich die ganze Zeit fühle.
+Weil das, was ich fuer dich empfinde,
+laesst sich nicht einfach erklaeren.
+Es ist nicht nur ein Gefuehl.
+Es ist etwas, das einfach da ist
+die ganze Zeit.
 
-Du bist für mich nicht nur meine Freundin.
+Du bist fuer mich nicht nur meine Freundin.
 Du bist die Person,
-bei der ich meine Ruhe finde.
+bei der alles irgendwie still wird.
 
 Egal wie mein Tag war,
 egal was in meinem Kopf los ist
@@ -487,57 +488,57 @@ wenn ich an dich denke,
 wird alles ruhiger.
 
 Und ich glaube, genau das ist das,
-was dich für mich so besonders macht.
+was dich fuer mich so besonders macht.
 
-Du bist nicht verschlossen, 
+Du bist nicht laut,
 nicht aufdringlich,
 nicht kompliziert.
 
 Und trotzdem schaffst du es,
-Gefühle in mir ausgelöst zu haben die ich selber erst 
-verstehen muss.
+mehr in mir ausgeloest zu haben als alles andere.
 
-Ich fühle mich bei dir einfach richtig.
+Ich fuehle mich bei dir einfach richtig.
 
-So, als müsste ich nichts erklären und
-als würde alles genau so passen, wie es ist.
+So, als muesste ich nichts erklaeren.
+So, als wuerde alles genau so passen, wie es ist.
 
-Und ich habe das Gefühl,
+Und ich habe das Gefuehl,
 dass ich durch dich Dinge gelernt habe,
 die ich vorher nie wirklich verstanden habe.
 
 Wie es ist, jemandem wirklich zu vertrauen.
-Wie es ist, sich wirklich wohlzufühlen.
+Wie es ist, sich wirklich wohlzufuehlen.
 Und wie es ist,
-einen Menschen nicht mehr aus seinem Leben wegdenken zu können.
+einen Menschen nicht mehr aus seinem Leben wegdenken zu koennen.
 
-Du bist für mich zu einem festen Teil geworden.
-Dieses Gefühl würde ich als Liebe beschreiben, glaube ich.
+Du bist fuer mich zu einem festen Teil geworden.
+Nicht irgendwann,
+sondern einfach so.
 
 Und genau das macht mir manchmal bewusst,
 wie besonders das alles ist.
 
-Weil nichts davon selbstverständlich ist.
+Weil nichts davon selbstverstaendlich ist.
 
 Ich bin einfach dankbar.
-Für dich.
-Für alles, was du bist.
-Für die Art, wie du denkst,
-wie du fühlst
+Fuer dich.
+Fuer alles, was du bist.
+Fuer die Art, wie du denkst,
+wie du fuehlst
 und wie du mit mir umgehst.
 
 Und ich merke,
-dass ich mir genau das immer gewünscht habe,
-ohne es wirklich zu wissen.
+dass ich mir genau das immer gewuenscht habe,
+ohne es richtig benennen zu koennen.
 
 Ich kann dir nicht versprechen,
 dass immer alles perfekt sein wird.
 
 Aber ich kann dir sagen,
-dass ich es mit dir immer genauso ehrlich meinen werde,
+dass ich dich immer genauso ehrlich meinen werde,
 wie ich es jetzt tue.
 
-Und dass ich dich niemals als selbstverständlich sehen werde.
+Und dass ich dich niemals als selbstverstaendlich sehen werde.
 
 Alles Gute zum Geburtstag ❤️
 
@@ -1408,12 +1409,84 @@ function buildUploadMonthOptions() {
   return months;
 }
 
+function getUploadInputs() {
+  return [
+    document.getElementById("galleryMediaInput"),
+    document.getElementById("galleryFolderInput")
+  ].filter(Boolean);
+}
+
+function countSupportedUploadFiles(input) {
+  return Array.from((input && input.files) || []).filter(function(file) {
+    return Boolean(detectMediaTypeFromName(file.name));
+  }).length;
+}
+
+function getActiveUploadInput() {
+  const activeInputId = document.body.dataset.activeUploadInputId;
+
+  if (activeInputId) {
+    const activeInput = document.getElementById(activeInputId);
+    if (activeInput && activeInput.files && activeInput.files.length) {
+      return activeInput;
+    }
+  }
+
+  return getUploadInputs().find(function(input) {
+    return input.files && input.files.length;
+  }) || null;
+}
+
+function clearInactiveUploadInputs(activeInput) {
+  getUploadInputs().forEach(function(input) {
+    if (input !== activeInput) {
+      input.value = "";
+    }
+  });
+}
+
+function getUploadSourceLabel(input) {
+  if (!input) {
+    return "Auswahl";
+  }
+
+  return input.id === "galleryFolderInput" ? "Ordnerauswahl" : "Medienauswahl";
+}
+
+function bindUploadSelectionInput(input, monthSelect) {
+  if (!input || input.dataset.bound === "true") {
+    return;
+  }
+
+  input.dataset.bound = "true";
+  input.addEventListener("change", function() {
+    const totalFiles = countSupportedUploadFiles(input);
+
+    if (!input.files || !input.files.length) {
+      if (document.body.dataset.activeUploadInputId === input.id) {
+        delete document.body.dataset.activeUploadInputId;
+      }
+      return;
+    }
+
+    document.body.dataset.activeUploadInputId = input.id;
+    clearInactiveUploadInputs(input);
+
+    if (!totalFiles) {
+      updateUploadStatus("Keine unterstuetzten Fotos oder Videos ausgewaehlt.", true);
+      return;
+    }
+
+    updateUploadStatus(`${totalFiles} Dateien aus der ${getUploadSourceLabel(input)} bereit fuer ${formatMonthLabel(monthSelect.value)}.`);
+  });
+}
+
 function initializeUploadPage() {
   const monthSelect = document.getElementById("uploadMonthSelect");
-  const uploadInput = document.getElementById("galleryUploadInput");
   const uploadBtn = document.getElementById("galleryUploadBtn");
+  const uploadInputs = getUploadInputs();
 
-  if (!monthSelect || !uploadInput || !uploadBtn) {
+  if (!monthSelect || !uploadBtn || !uploadInputs.length) {
     return;
   }
 
@@ -1438,21 +1511,9 @@ function initializeUploadPage() {
     monthSelect.value = hasSuggestedMonth ? suggestedMonthId : monthOptions[monthOptions.length - 1].id;
   }
 
-  if (uploadInput.dataset.bound !== "true") {
-    uploadInput.dataset.bound = "true";
-    uploadInput.addEventListener("change", function() {
-      const totalFiles = Array.from(uploadInput.files || []).filter(function(file) {
-        return Boolean(detectMediaTypeFromName(file.name));
-      }).length;
-
-      if (!totalFiles) {
-        updateUploadStatus("Keine unterstuetzten Fotos oder Videos ausgewaehlt.", true);
-        return;
-      }
-
-      updateUploadStatus(`${totalFiles} Dateien bereit fuer ${formatMonthLabel(monthSelect.value)}.`);
-    });
-  }
+  uploadInputs.forEach(function(input) {
+    bindUploadSelectionInput(input, monthSelect);
+  });
 
   if (uploadBtn.dataset.bound !== "true") {
     uploadBtn.dataset.bound = "true";
@@ -1519,7 +1580,6 @@ function resetUploadProgress() {
 
 function setUploadBusy(isBusy) {
   const uploadBtn = document.getElementById("galleryUploadBtn");
-  const uploadInput = document.getElementById("galleryUploadInput");
   const monthSelect = document.getElementById("uploadMonthSelect");
 
   if (uploadBtn) {
@@ -1527,9 +1587,9 @@ function setUploadBusy(isBusy) {
     uploadBtn.textContent = isBusy ? "Upload laeuft..." : "Zu Firebase hochladen";
   }
 
-  if (uploadInput) {
-    uploadInput.disabled = isBusy;
-  }
+  getUploadInputs().forEach(function(input) {
+    input.disabled = isBusy;
+  });
 
   if (monthSelect) {
     monthSelect.disabled = isBusy;
@@ -1570,14 +1630,14 @@ function uploadFileToStorage(path, file) {
 
 async function handleGalleryUpload() {
   const monthSelect = document.getElementById("uploadMonthSelect");
-  const uploadInput = document.getElementById("galleryUploadInput");
+  const uploadInput = getActiveUploadInput();
 
-  if (!monthSelect || !uploadInput || !storageRefFactory) {
+  if (!monthSelect || !storageRefFactory) {
     return;
   }
 
   const monthId = monthSelect.value;
-  const selectedFiles = Array.from(uploadInput.files || []);
+  const selectedFiles = Array.from((uploadInput && uploadInput.files) || []);
   const mediaFiles = selectedFiles.filter(function(file) {
     return Boolean(detectMediaTypeFromName(file.name));
   });
@@ -1588,7 +1648,7 @@ async function handleGalleryUpload() {
   }
 
   if (!mediaFiles.length) {
-    updateUploadStatus("Bitte waehle einen Ordner oder Dateien mit Fotos/Videos aus.", true);
+    updateUploadStatus("Bitte waehle zuerst Fotos/Videos oder am Desktop einen Monatsordner aus.", true);
     return;
   }
 
@@ -1611,7 +1671,10 @@ async function handleGalleryUpload() {
 
     galleryMonths = [];
     galleryItemsCache = {};
-    uploadInput.value = "";
+    getUploadInputs().forEach(function(input) {
+      input.value = "";
+    });
+    delete document.body.dataset.activeUploadInputId;
     updateUploadStatus(`Upload abgeschlossen: ${mediaFiles.length} Dateien fuer ${formatMonthLabel(monthId)}.`);
     resetUploadProgress();
   } catch (error) {
