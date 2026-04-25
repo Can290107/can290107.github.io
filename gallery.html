@@ -52,6 +52,8 @@
 
       <div id="galleryEmptyState" class="gallery-empty hidden">
         <h3>Noch keine Erinnerungen für diesen Monat</h3>
+        <p>Hier erscheinen deine Fotos und Videos, sobald für diesen Monat etwas hochgeladen wurde.</p>
+      </div>
     </section>
   </main>
 
@@ -60,6 +62,9 @@
       <button class="media-lightbox-close" type="button" onclick="closeMediaLightbox()" aria-label="Ansicht schließen">✕</button>
       <div id="mediaLightboxContent" class="media-lightbox-content"></div>
       <p id="mediaLightboxCaption" class="media-lightbox-caption"></p>
+      <div class="media-lightbox-actions">
+        <button id="deleteGalleryItemBtn" class="media-lightbox-delete hidden" type="button" onclick="deleteActiveGalleryItem()">Datei löschen</button>
+      </div>
     </div>
   </div>
 

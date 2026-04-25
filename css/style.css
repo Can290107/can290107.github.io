@@ -1153,6 +1153,30 @@ ul{
   color:rgba(255,255,255,0.86);
 }
 
+.media-lightbox-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:16px;
+}
+
+.media-lightbox-delete{
+  margin:0;
+  padding:12px 18px;
+  font-size:14px;
+  background:#be123c;
+  box-shadow:none;
+}
+
+.media-lightbox-delete:hover{
+  transform:none;
+  box-shadow:0 10px 24px rgba(190,18,60,0.3);
+}
+
+.media-lightbox-delete:disabled{
+  opacity:0.7;
+  cursor:wait;
+}
+
 /* -------- Upload -------- */
 
 .upload-page{

@@ -17,6 +17,7 @@ const storageRefFactory = window.storageRef;
 
 let currentEventKey = null;
 let activeGalleryMonth = null;
+let activeLightboxItem = null;
 let todoUnsubscribe = null;
 let eventsUnsubscribe = null;
 let calendarEvents = {};
@@ -1058,7 +1059,8 @@ async function getStorageGalleryItems(monthId) {
       src: downloadUrl,
       alt: caption,
       caption: caption,
-      sortKey: itemRef.fullPath
+      sortKey: itemRef.fullPath,
+      storagePath: itemRef.fullPath
     };
   }));
 
@@ -1071,14 +1073,15 @@ async function getStorageGalleryItems(monthId) {
       type: item.type,
       src: item.src,
       alt: item.alt,
-      caption: item.caption
+      caption: item.caption,
+      storagePath: item.storagePath || ""
     };
   });
 
   return galleryItemsCache[monthId];
 }
 
-async function initializeGalleryPage() {
+async function initializeGalleryPage(preferredMonthId) {
   const monthTabs = document.getElementById("galleryMonthTabs");
   const galleryGrid = document.getElementById("galleryGrid");
   const canUseManifest = canUseHostedGalleryManifest();
@@ -1144,7 +1147,13 @@ async function initializeGalleryPage() {
     return;
   }
 
-  await setActiveGalleryMonth(galleryMonths[galleryMonths.length - 1].id);
+  const targetMonthId = preferredMonthId && galleryMonths.some(function(month) {
+    return month.id === preferredMonthId;
+  })
+    ? preferredMonthId
+    : galleryMonths[galleryMonths.length - 1].id;
+
+  await setActiveGalleryMonth(targetMonthId);
 }
 
 function renderGalleryMonthTabs() {
@@ -1340,6 +1349,18 @@ function initializeMediaLightbox() {
   });
 }
 
+function updateLightboxDeleteButton(item, isBusy) {
+  const deleteBtn = document.getElementById("deleteGalleryItemBtn");
+  if (!deleteBtn) {
+    return;
+  }
+
+  const canDelete = Boolean(item && item.storagePath && storageRefFactory);
+  deleteBtn.classList.toggle("hidden", !canDelete);
+  deleteBtn.disabled = !canDelete || Boolean(isBusy);
+  deleteBtn.textContent = isBusy ? "Löschen..." : "Datei löschen";
+}
+
 function openMediaLightbox(item) {
   const lightbox = document.getElementById("mediaLightbox");
   const lightboxContent = document.getElementById("mediaLightboxContent");
@@ -1350,6 +1371,7 @@ function openMediaLightbox(item) {
   }
 
   const itemType = item.type === "video" ? "video" : "image";
+  activeLightboxItem = item;
   lightboxContent.innerHTML = "";
 
   if (itemType === "video") {
@@ -1370,6 +1392,7 @@ function openMediaLightbox(item) {
   }
 
   lightboxCaption.textContent = item.caption || item.alt || formatMonthLabel(activeGalleryMonth || "");
+  updateLightboxDeleteButton(item, false);
   lightbox.classList.remove("hidden");
   document.body.style.overflow = "hidden";
 }
@@ -1384,7 +1407,41 @@ function closeMediaLightbox() {
 
   lightbox.classList.add("hidden");
   lightboxContent.innerHTML = "";
+  activeLightboxItem = null;
+  updateLightboxDeleteButton(null, false);
   document.body.style.overflow = "";
+}
+
+async function deleteActiveGalleryItem() {
+  if (!activeLightboxItem || !activeLightboxItem.storagePath || !storageRefFactory) {
+    return;
+  }
+
+  const itemLabel = activeLightboxItem.caption || activeLightboxItem.alt || "diese Datei";
+  const confirmed = window.confirm(`Willst du ${itemLabel} wirklich aus der Galerie löschen?`);
+
+  if (!confirmed) {
+    return;
+  }
+
+  updateLightboxDeleteButton(activeLightboxItem, true);
+
+  try {
+    await storageRefFactory(activeLightboxItem.storagePath).delete();
+
+    if (activeGalleryMonth && galleryItemsCache[activeGalleryMonth]) {
+      galleryItemsCache[activeGalleryMonth] = galleryItemsCache[activeGalleryMonth].filter(function(item) {
+        return item.storagePath !== activeLightboxItem.storagePath;
+      });
+    }
+
+    closeMediaLightbox();
+    await initializeGalleryPage(activeGalleryMonth);
+  } catch (error) {
+    console.error("Galerie-Datei konnte nicht gelöscht werden:", error);
+    updateLightboxDeleteButton(activeLightboxItem, false);
+    window.alert("Die Datei konnte nicht gelöscht werden. Bitte versuche es noch einmal.");
+  }
 }
 
 function buildUploadMonthOptions() {
@@ -1700,3 +1757,4 @@ window.handleLogin = handleLogin;
 window.handleLogout = handleLogout;
 window.closePopup = closePopup;
 window.closeMediaLightbox = closeMediaLightbox;
+window.deleteActiveGalleryItem = deleteActiveGalleryItem;
