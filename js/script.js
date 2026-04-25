@@ -623,20 +623,37 @@ function loadTodos() {
         li.classList.add("done");
       }
 
-      const left = document.createElement("div");
-      left.classList.add("todo-left");
-      left.textContent = todo.text;
-      left.onclick = function() {
+      const toggleBtn = document.createElement("button");
+      toggleBtn.type = "button";
+      toggleBtn.classList.add("todo-toggle-btn");
+      toggleBtn.setAttribute("aria-pressed", todo.done ? "true" : "false");
+      toggleBtn.setAttribute("aria-label", todo.done ? "Als offen markieren" : "Als erledigt markieren");
+      toggleBtn.onclick = function() {
         toggleTodo(docItem.id, todo.done);
       };
 
+      const checkmark = document.createElement("span");
+      checkmark.classList.add("todo-checkmark");
+      checkmark.setAttribute("aria-hidden", "true");
+      checkmark.textContent = todo.done ? "✓" : "";
+
+      const text = document.createElement("span");
+      text.classList.add("todo-text");
+      text.textContent = todo.text;
+
+      toggleBtn.appendChild(checkmark);
+      toggleBtn.appendChild(text);
+
       const btn = document.createElement("button");
+      btn.type = "button";
+      btn.classList.add("todo-delete-btn");
+      btn.setAttribute("aria-label", "Eintrag löschen");
       btn.textContent = "✕";
       btn.onclick = function() {
         deleteTodo(docItem.id);
       };
 
-      li.appendChild(left);
+      li.appendChild(toggleBtn);
       li.appendChild(btn);
       list.appendChild(li);
     });
