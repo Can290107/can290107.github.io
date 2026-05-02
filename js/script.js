@@ -3,6 +3,9 @@ const AUTH_SESSION_DAY_KEY = "authSessionDay";
 const AUTH_USERNAME_KEY = "authUsername";
 const LEGACY_LOGIN_USER_KEY = "loggedInUser";
 const LEGACY_LOGIN_TIME_KEY = "loginTimestamp";
+const ACTIVITY_COLLECTION = "activity";
+const ACTIVITY_FEED_LIMIT = 25;
+const ACTIVITY_POPUP_DURATION_MS = 9000;
 const GALLERY_STORAGE_ROOT = window.galleryStorageRoot || "gallery";
 const GALLERY_START_YEAR = 2025;
 const GALLERY_START_MONTH = 4;
@@ -20,6 +23,7 @@ let activeGalleryMonth = null;
 let activeLightboxItem = null;
 let todoUnsubscribe = null;
 let eventsUnsubscribe = null;
+let activityUnsubscribe = null;
 let calendarEvents = {};
 let pageFeaturesInitialized = false;
 let galleryMonths = [];
@@ -28,8 +32,17 @@ let gallerySource = "storage";
 let gallerySortMode = "newest";
 let galleryEmptyStateTitle = "Noch keine Erinnerungen fuer diesen Monat";
 let galleryEmptyStateMessage = "Lade den Monatsordner in Firebase Storage hoch oder nutze fuer lokal gespeicherte Dateien das bestehende Galerie-Manifest als Fallback.";
+let activityFeedPrimed = false;
+let pendingTodoTargetId = "";
+let pendingEventTargetKey = "";
+let pendingToolsSection = "";
+let pendingToolsMonthId = "";
+let pendingGalleryTargetPath = "";
+let pendingGalleryTargetMonthId = "";
+const seenActivityIds = new Set();
 
 document.addEventListener("DOMContentLoaded", function() {
+  initializePendingNavigationTargets();
   bindLoginForm();
   bindEventPopupButtons();
   bindHeartEffect();
@@ -80,6 +93,356 @@ function persistAuthSession(loginValue) {
 
 function isCurrentSessionValid() {
   return localStorage.getItem(AUTH_SESSION_DAY_KEY) === getCurrentDayKey();
+}
+
+function getStoredUsername() {
+  return (localStorage.getItem(AUTH_USERNAME_KEY) || "").trim().toLowerCase();
+}
+
+function getCurrentActorKey() {
+  const storedUsername = getStoredUsername();
+  if (storedUsername) {
+    return storedUsername;
+  }
+
+  const currentUser = authService && authService.currentUser;
+  if (!currentUser || !currentUser.email) {
+    return "";
+  }
+
+  const email = currentUser.email.toLowerCase();
+  const mappedUsername = Object.keys(authUserMap).find(function(username) {
+    return String(authUserMap[username] || "").toLowerCase() === email;
+  });
+
+  return mappedUsername || email.split("@")[0];
+}
+
+function formatActorLabel(actorKey) {
+  if (!actorKey) {
+    return "Jemand";
+  }
+
+  return actorKey
+    .split(/[^a-zA-Z0-9]+/)
+    .filter(Boolean)
+    .map(function(part) {
+      return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+    })
+    .join(" ") || "Jemand";
+}
+
+function getCurrentActorLabel() {
+  return formatActorLabel(getCurrentActorKey());
+}
+
+function parseEventKey(eventKey) {
+  const parts = String(eventKey || "").split("-");
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+
+  if ([year, month, day].some(function(value) {
+    return Number.isNaN(value);
+  })) {
+    return null;
+  }
+
+  return { year: year, month: month, day: day };
+}
+
+function getMonthIdFromEventKey(eventKey) {
+  const parsedEvent = parseEventKey(eventKey);
+  if (!parsedEvent) {
+    return "";
+  }
+
+  return createMonthIdFromDate(new Date(parsedEvent.year, parsedEvent.month, 1));
+}
+
+function formatCalendarDate(year, month, day) {
+  return new Date(year, month, day).toLocaleDateString("de-DE", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric"
+  });
+}
+
+function formatCalendarDateFromEventKey(eventKey) {
+  const parsedEvent = parseEventKey(eventKey);
+  if (!parsedEvent) {
+    return "";
+  }
+
+  return formatCalendarDate(parsedEvent.year, parsedEvent.month, parsedEvent.day);
+}
+
+function clearNavigationParams(paramNames) {
+  if (!Array.isArray(paramNames) || !paramNames.length || !window.history || typeof window.history.replaceState !== "function") {
+    return;
+  }
+
+  const url = new URL(window.location.href);
+  let changed = false;
+
+  paramNames.forEach(function(paramName) {
+    if (url.searchParams.has(paramName)) {
+      url.searchParams.delete(paramName);
+      changed = true;
+    }
+  });
+
+  if (changed) {
+    const search = url.searchParams.toString();
+    window.history.replaceState({}, "", `${url.pathname}${search ? `?${search}` : ""}${url.hash}`);
+  }
+}
+
+function initializePendingNavigationTargets() {
+  const params = new URLSearchParams(window.location.search);
+  const currentPage = getCurrentPageName();
+
+  if (currentPage === "tools.html") {
+    pendingTodoTargetId = params.get("todo") || "";
+    pendingEventTargetKey = params.get("event") || "";
+    pendingToolsSection = params.get("section") || "";
+    pendingToolsMonthId = params.get("month") || "";
+
+    const eventMonthId = getMonthIdFromEventKey(pendingEventTargetKey);
+    const preferredMonthId = eventMonthId || pendingToolsMonthId;
+    const preferredMonthDate = preferredMonthId ? parseMonthIdToDate(preferredMonthId) : null;
+
+    if (preferredMonthDate) {
+      currentDate = preferredMonthDate;
+    }
+  }
+
+  if (currentPage === "gallery.html") {
+    pendingGalleryTargetMonthId = params.get("month") || "";
+    pendingGalleryTargetPath = params.get("item") || "";
+  }
+}
+
+function ensureActivityPopupStack() {
+  let stack = document.getElementById("activityPopupStack");
+  if (stack) {
+    return stack;
+  }
+
+  stack = document.createElement("div");
+  stack.id = "activityPopupStack";
+  stack.className = "activity-popup-stack";
+  document.body.appendChild(stack);
+  return stack;
+}
+
+function removeActivityPopup(popup) {
+  if (!popup || popup.dataset.removing === "true") {
+    return;
+  }
+
+  popup.dataset.removing = "true";
+  popup.classList.remove("visible");
+
+  setTimeout(function() {
+    popup.remove();
+  }, 220);
+}
+
+function canShowActivityPopup() {
+  if (getCurrentPageName() !== "index.html") {
+    return false;
+  }
+
+  const mainContent = document.getElementById("mainContent");
+  return Boolean(mainContent && mainContent.style.display !== "none");
+}
+
+function buildActivityTargetUrl(activity) {
+  if (!activity || !activity.section) {
+    return "";
+  }
+
+  if (activity.section === "gallery") {
+    const galleryUrl = new URL("gallery.html", window.location.href);
+    if (activity.monthId) {
+      galleryUrl.searchParams.set("month", activity.monthId);
+    }
+    if (activity.storagePath && activity.action !== "delete") {
+      galleryUrl.searchParams.set("item", activity.storagePath);
+    }
+    return galleryUrl.toString();
+  }
+
+  if (activity.section === "calendar") {
+    const toolsUrl = new URL("tools.html", window.location.href);
+    toolsUrl.searchParams.set("section", "calendar");
+    if (activity.monthId) {
+      toolsUrl.searchParams.set("month", activity.monthId);
+    }
+    if (activity.eventKey && activity.action !== "delete") {
+      toolsUrl.searchParams.set("event", activity.eventKey);
+    }
+    return toolsUrl.toString();
+  }
+
+  if (activity.section === "todo") {
+    const toolsUrl = new URL("tools.html", window.location.href);
+    toolsUrl.searchParams.set("section", "todo");
+    if (activity.todoId && activity.action !== "delete") {
+      toolsUrl.searchParams.set("todo", activity.todoId);
+    }
+    return toolsUrl.toString();
+  }
+
+  return "";
+}
+
+function showActivityPopup(activity) {
+  if (!canShowActivityPopup()) {
+    return;
+  }
+
+  const targetUrl = buildActivityTargetUrl(activity);
+  if (!targetUrl) {
+    return;
+  }
+
+  const stack = ensureActivityPopupStack();
+  const popup = document.createElement("button");
+  popup.type = "button";
+  popup.className = "activity-popup";
+
+  const title = document.createElement("strong");
+  title.className = "activity-popup-title";
+  title.textContent = activity.title || "Neue Änderung";
+
+  const body = document.createElement("p");
+  body.className = "activity-popup-body";
+  body.textContent = activity.description || "Tippe hier, um direkt zur Änderung zu springen.";
+
+  const linkHint = document.createElement("span");
+  linkHint.className = "activity-popup-link";
+  linkHint.textContent = "Öffnen";
+
+  popup.appendChild(title);
+  popup.appendChild(body);
+  popup.appendChild(linkHint);
+  popup.addEventListener("click", function() {
+    window.location.href = targetUrl;
+  });
+
+  stack.appendChild(popup);
+
+  requestAnimationFrame(function() {
+    popup.classList.add("visible");
+  });
+
+  setTimeout(function() {
+    removeActivityPopup(popup);
+  }, ACTIVITY_POPUP_DURATION_MS);
+}
+
+async function publishActivity(payload) {
+  const currentUser = authService && authService.currentUser;
+  if (!currentUser || !payload || !payload.section || !payload.title) {
+    return;
+  }
+
+  try {
+    await addDoc(collection(ACTIVITY_COLLECTION), {
+      section: payload.section,
+      action: payload.action || "update",
+      title: payload.title,
+      description: payload.description || "",
+      actorUid: currentUser.uid,
+      actorKey: getCurrentActorKey(),
+      actorLabel: getCurrentActorLabel(),
+      todoId: payload.todoId || "",
+      eventKey: payload.eventKey || "",
+      monthId: payload.monthId || "",
+      storagePath: payload.storagePath || "",
+      createdAtMs: Date.now()
+    });
+  } catch (error) {
+    console.error("Aktivität konnte nicht gespeichert werden:", error);
+  }
+}
+
+function resetActivityNotifications() {
+  if (activityUnsubscribe) {
+    activityUnsubscribe();
+    activityUnsubscribe = null;
+  }
+
+  activityFeedPrimed = false;
+  seenActivityIds.clear();
+
+  const stack = document.getElementById("activityPopupStack");
+  if (stack) {
+    stack.innerHTML = "";
+  }
+}
+
+function initializeActivityNotifications() {
+  if (activityUnsubscribe || getCurrentPageName() !== "index.html") {
+    return;
+  }
+
+  activityUnsubscribe = collection(ACTIVITY_COLLECTION)
+    .orderBy("createdAtMs", "desc")
+    .limit(ACTIVITY_FEED_LIMIT)
+    .onSnapshot(function(snapshot) {
+      if (!activityFeedPrimed) {
+        snapshot.forEach(function(docItem) {
+          seenActivityIds.add(docItem.id);
+        });
+        activityFeedPrimed = true;
+        return;
+      }
+
+      const currentUser = authService && authService.currentUser;
+      const freshActivities = [];
+
+      snapshot.docChanges().forEach(function(change) {
+        if (change.type !== "added" || seenActivityIds.has(change.doc.id)) {
+          return;
+        }
+
+        seenActivityIds.add(change.doc.id);
+        const activity = change.doc.data();
+
+        if (currentUser && activity.actorUid === currentUser.uid) {
+          return;
+        }
+
+        freshActivities.push(activity);
+      });
+
+      freshActivities.reverse().forEach(function(activity) {
+        showActivityPopup(activity);
+      });
+    }, function(error) {
+      console.error("Aktivitäts-Feed konnte nicht geladen werden:", error);
+    });
+}
+
+function highlightActivityTarget(element) {
+  if (!element) {
+    return;
+  }
+
+  element.classList.remove("activity-target-highlight");
+  void element.offsetWidth;
+  element.classList.add("activity-target-highlight");
+
+  setTimeout(function() {
+    element.classList.remove("activity-target-highlight");
+  }, 2400);
 }
 
 function unlockPendingAuthState() {
@@ -208,6 +571,7 @@ function handleAuthenticatedState() {
 
   if (getCurrentPageName() === "index.html") {
     showMainContent();
+    initializeActivityNotifications();
   }
 
   if (!pageFeaturesInitialized) {
@@ -217,6 +581,7 @@ function handleAuthenticatedState() {
 }
 
 function handleSignedOutState() {
+  resetActivityNotifications();
   clearLocalAuthState();
 
   if (isProtectedPage()) {
@@ -418,7 +783,7 @@ function initializePageFeatures() {
   }
 
   if (currentPage === "gallery.html") {
-    initializeGalleryPage();
+    initializeGalleryPage(pendingGalleryTargetMonthId || undefined);
   }
 
   if (currentPage === "secret.html") {
@@ -602,6 +967,87 @@ function goBack() {
   window.location.href = "index.html";
 }
 
+function focusRequestedTodoTarget() {
+  const list = document.getElementById("todoList");
+  if (!list) {
+    return;
+  }
+
+  const todoSection = list.closest("section");
+
+  if (pendingTodoTargetId) {
+    const targetItem = Array.from(list.querySelectorAll(".todo-item")).find(function(item) {
+      return item.dataset.todoId === pendingTodoTargetId;
+    });
+
+    if (todoSection) {
+      todoSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+
+    if (targetItem) {
+      highlightActivityTarget(targetItem);
+    }
+
+    pendingTodoTargetId = "";
+    pendingToolsSection = "";
+    clearNavigationParams(["todo", "section"]);
+    return;
+  }
+
+  if (pendingToolsSection === "todo" && todoSection) {
+    todoSection.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+    pendingToolsSection = "";
+    clearNavigationParams(["section"]);
+  }
+}
+
+function focusRequestedCalendarTarget(targetDay, targetText, targetKey) {
+  const grid = document.getElementById("calendarGrid");
+  if (!grid) {
+    return;
+  }
+
+  const calendarSection = grid.closest("section");
+
+  if (pendingEventTargetKey) {
+    if (calendarSection) {
+      calendarSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+
+    if (targetDay) {
+      highlightActivityTarget(targetDay);
+      if (targetText) {
+        openPopup(targetText, targetKey);
+      }
+    }
+
+    pendingEventTargetKey = "";
+    pendingToolsMonthId = "";
+    pendingToolsSection = "";
+    clearNavigationParams(["event", "month", "section"]);
+    return;
+  }
+
+  if (pendingToolsSection === "calendar" && calendarSection) {
+    calendarSection.scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+    pendingToolsMonthId = "";
+    pendingToolsSection = "";
+    clearNavigationParams(["month", "section"]);
+  }
+}
+
 function loadTodos() {
   if (todoUnsubscribe) {
     return;
@@ -619,6 +1065,7 @@ function loadTodos() {
       const todo = docItem.data();
       const li = document.createElement("li");
       li.classList.add("todo-item");
+      li.dataset.todoId = docItem.id;
 
       if (todo.done) {
         li.classList.add("done");
@@ -630,7 +1077,7 @@ function loadTodos() {
       toggleBtn.setAttribute("aria-pressed", todo.done ? "true" : "false");
       toggleBtn.setAttribute("aria-label", todo.done ? "Als offen markieren" : "Als erledigt markieren");
       toggleBtn.onclick = function() {
-        toggleTodo(docItem.id, todo.done);
+        toggleTodo(docItem.id, todo.done, todo.text);
       };
 
       const checkmark = document.createElement("span");
@@ -651,38 +1098,82 @@ function loadTodos() {
       btn.setAttribute("aria-label", "Eintrag löschen");
       btn.textContent = "✕";
       btn.onclick = function() {
-        deleteTodo(docItem.id);
+        deleteTodo(docItem.id, todo.text);
       };
 
       li.appendChild(toggleBtn);
       li.appendChild(btn);
       list.appendChild(li);
     });
+
+    focusRequestedTodoTarget();
   });
 }
 
-function addTodo() {
+async function addTodo() {
   const input = document.getElementById("todoInput");
   if (!input || !input.value.trim()) {
     return;
   }
 
-  addDoc(collection("todos"), {
-    text: input.value.trim(),
-    done: false
-  });
+  const todoText = input.value.trim();
+
+  try {
+    const todoRef = await addDoc(collection("todos"), {
+      text: todoText,
+      done: false
+    });
+
+    await publishActivity({
+      section: "todo",
+      action: "add",
+      title: `${getCurrentActorLabel()} hat etwas zur Liste hinzugefügt`,
+      description: todoText,
+      todoId: todoRef.id
+    });
+  } catch (error) {
+    console.error("Listenpunkt konnte nicht gespeichert werden:", error);
+    return;
+  }
 
   input.value = "";
 }
 
-function toggleTodo(id, currentState) {
-  updateDoc(doc("todos", id), {
-    done: !currentState
-  });
+async function toggleTodo(id, currentState, todoText) {
+  const nextState = !currentState;
+
+  try {
+    await updateDoc(doc("todos", id), {
+      done: nextState
+    });
+
+    await publishActivity({
+      section: "todo",
+      action: nextState ? "complete" : "reopen",
+      title: nextState
+        ? `${getCurrentActorLabel()} hat einen Listenpunkt abgehakt`
+        : `${getCurrentActorLabel()} hat einen Listenpunkt wieder geöffnet`,
+      description: todoText || "",
+      todoId: id
+    });
+  } catch (error) {
+    console.error("Listenpunkt konnte nicht aktualisiert werden:", error);
+  }
 }
 
-function deleteTodo(id) {
-  deleteDoc(doc("todos", id));
+async function deleteTodo(id, todoText) {
+  try {
+    await deleteDoc(doc("todos", id));
+
+    await publishActivity({
+      section: "todo",
+      action: "delete",
+      title: `${getCurrentActorLabel()} hat etwas aus der Liste gelöscht`,
+      description: todoText || ""
+    });
+  } catch (error) {
+    console.error("Listenpunkt konnte nicht gelöscht werden:", error);
+  }
 }
 
 let currentDate = new Date();
@@ -713,24 +1204,57 @@ function bindEventPopupButtons() {
 
   if (deleteBtn && deleteBtn.dataset.bound !== "true") {
     deleteBtn.dataset.bound = "true";
-    deleteBtn.onclick = function() {
+    deleteBtn.onclick = async function() {
       if (!currentEventKey) {
         return;
       }
 
-      deleteDoc(doc("events", currentEventKey));
+      const deletedText = calendarEvents[currentEventKey] || "";
+
+      try {
+        await deleteDoc(doc("events", currentEventKey));
+
+        await publishActivity({
+          section: "calendar",
+          action: "delete",
+          title: `${getCurrentActorLabel()} hat ein Kalendereignis gelöscht`,
+          description: deletedText
+            ? `${formatCalendarDateFromEventKey(currentEventKey)} · ${deletedText}`
+            : formatCalendarDateFromEventKey(currentEventKey),
+          eventKey: currentEventKey,
+          monthId: getMonthIdFromEventKey(currentEventKey)
+        });
+      } catch (error) {
+        console.error("Kalendereignis konnte nicht gelöscht werden:", error);
+      }
+
       closePopup();
     };
   }
 
   if (editBtn && editBtn.dataset.bound !== "true") {
     editBtn.dataset.bound = "true";
-    editBtn.onclick = function() {
+    editBtn.onclick = async function() {
       const newText = prompt("Neuer Text:");
-      if (newText && newText.trim() !== "") {
-        setDoc(doc("events", currentEventKey), {
-          text: newText.trim()
-        });
+      const trimmedText = newText ? newText.trim() : "";
+
+      if (trimmedText !== "") {
+        try {
+          await setDoc(doc("events", currentEventKey), {
+            text: trimmedText
+          });
+
+          await publishActivity({
+            section: "calendar",
+            action: "edit",
+            title: `${getCurrentActorLabel()} hat ein Kalendereignis geändert`,
+            description: `${formatCalendarDateFromEventKey(currentEventKey)} · ${trimmedText}`,
+            eventKey: currentEventKey,
+            monthId: getMonthIdFromEventKey(currentEventKey)
+          });
+        } catch (error) {
+          console.error("Kalendereignis konnte nicht bearbeitet werden:", error);
+        }
       }
       closePopup();
     };
@@ -769,6 +1293,9 @@ function renderCalendar(events) {
   firstDay = firstDay === 0 ? 6 : firstDay - 1;
 
   const daysInMonth = new Date(year, month + 1, 0).getDate();
+  let pendingEventDay = null;
+  let pendingEventText = "";
+  let pendingEventKey = "";
 
   for (let index = 0; index < firstDay; index += 1) {
     grid.innerHTML += "<div></div>";
@@ -790,25 +1317,48 @@ function renderCalendar(events) {
       div.classList.add("today");
     }
 
+    div.dataset.eventKey = key;
     div.textContent = day;
-    div.onclick = function() {
+    div.onclick = async function() {
       if (hasEvent) {
         openPopup(hasEvent, key);
       } else {
         const text = prompt("Was wollen wir an diesem Tag machen? ❤️");
-        if (text) {
-          setDoc(doc("events", key), {
-            text: text.trim()
-          });
+        const trimmedText = text ? text.trim() : "";
+
+        if (trimmedText) {
+          try {
+            await setDoc(doc("events", key), {
+              text: trimmedText
+            });
+
+            await publishActivity({
+              section: "calendar",
+              action: "add",
+              title: `${getCurrentActorLabel()} hat ein Ereignis im Kalender hinzugefügt`,
+              description: `${formatCalendarDate(year, month, day)} · ${trimmedText}`,
+              eventKey: key,
+              monthId: createMonthIdFromDate(new Date(year, month, 1))
+            });
+          } catch (error) {
+            console.error("Kalendereignis konnte nicht gespeichert werden:", error);
+          }
         }
       }
     };
+
+    if (pendingEventTargetKey && pendingEventTargetKey === key) {
+      pendingEventDay = div;
+      pendingEventText = hasEvent || "";
+      pendingEventKey = key;
+    }
 
     grid.appendChild(div);
   }
 
   requestAnimationFrame(function() {
     grid.style.opacity = 1;
+    focusRequestedCalendarTarget(pendingEventDay, pendingEventText, pendingEventKey);
   });
 }
 
@@ -828,6 +1378,13 @@ function loadEvents() {
     snapshot.forEach(function(docItem) {
       calendarEvents[docItem.id] = docItem.data().text;
     });
+
+    if (pendingToolsMonthId) {
+      const requestedDate = parseMonthIdToDate(pendingToolsMonthId);
+      if (requestedDate) {
+        currentDate = requestedDate;
+      }
+    }
 
     renderCalendar(calendarEvents);
   });
@@ -1327,6 +1884,7 @@ async function renderGalleryItems(monthId) {
     card.className = "gallery-card";
     card.tabIndex = 0;
     card.setAttribute("role", "button");
+    card.dataset.storagePath = item.storagePath || "";
 
     const itemType = item.type === "video" ? "video" : "image";
     const label = item.caption || item.alt || (itemType === "video" ? "Video" : "Foto");
@@ -1383,6 +1941,7 @@ async function renderGalleryItems(monthId) {
   });
 
   updateGallerySummary(monthId, items.length);
+  focusRequestedGalleryTarget(monthId, items, galleryGrid);
 }
 
 function updateGallerySummary(monthId, itemCount) {
@@ -1398,6 +1957,56 @@ function updateGallerySummary(monthId, itemCount) {
 
   const mediaLabel = itemCount === 1 ? "1 Erinnerung" : `${itemCount} Erinnerungen`;
   summary.textContent = `${formatMonthLabel(monthId)} · ${mediaLabel}`;
+}
+
+function focusRequestedGalleryTarget(monthId, items, galleryGrid) {
+  if (!galleryGrid) {
+    return;
+  }
+
+  if (pendingGalleryTargetPath) {
+    const targetItem = items.find(function(item) {
+      return item.storagePath === pendingGalleryTargetPath;
+    });
+    const targetCard = Array.from(galleryGrid.querySelectorAll(".gallery-card")).find(function(card) {
+      return card.dataset.storagePath === pendingGalleryTargetPath;
+    });
+
+    requestAnimationFrame(function() {
+      if (targetCard) {
+        targetCard.scrollIntoView({
+          behavior: "smooth",
+          block: "center"
+        });
+        highlightActivityTarget(targetCard);
+      }
+
+      if (targetItem) {
+        openMediaLightbox(targetItem);
+      }
+    });
+
+    pendingGalleryTargetPath = "";
+    pendingGalleryTargetMonthId = "";
+    clearNavigationParams(["item", "month"]);
+    return;
+  }
+
+  if (pendingGalleryTargetMonthId && pendingGalleryTargetMonthId === monthId) {
+    const gallerySection = galleryGrid.closest(".memory-gallery-section");
+
+    requestAnimationFrame(function() {
+      if (gallerySection) {
+        gallerySection.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      }
+    });
+
+    pendingGalleryTargetMonthId = "";
+    clearNavigationParams(["month"]);
+  }
 }
 
 function showGalleryEmptyState(isEmpty) {
@@ -1565,6 +2174,15 @@ async function renameActiveGalleryItem() {
       await renderGalleryItems(activeGalleryMonth);
     }
 
+    await publishActivity({
+      section: "gallery",
+      action: "rename",
+      title: `${getCurrentActorLabel()} hat einen Galerietitel geändert`,
+      description: nextLabel,
+      monthId: activeGalleryMonth,
+      storagePath: activeLightboxItem.storagePath
+    });
+
     updateLightboxActionButtons(activeLightboxItem);
   } catch (error) {
     console.error("Der Galeriename konnte nicht aktualisiert werden:", error);
@@ -1588,6 +2206,7 @@ async function deleteActiveGalleryItem() {
   updateLightboxActionButtons(activeLightboxItem, "delete");
 
   try {
+    const deletedStoragePath = activeLightboxItem.storagePath;
     await storageRefFactory(activeLightboxItem.storagePath).delete();
 
     if (activeGalleryMonth && galleryItemsCache[activeGalleryMonth]) {
@@ -1595,6 +2214,15 @@ async function deleteActiveGalleryItem() {
         return item.storagePath !== activeLightboxItem.storagePath;
       });
     }
+
+    await publishActivity({
+      section: "gallery",
+      action: "delete",
+      title: `${getCurrentActorLabel()} hat etwas aus der Galerie gelöscht`,
+      description: itemLabel,
+      monthId: activeGalleryMonth,
+      storagePath: deletedStoragePath
+    });
 
     closeMediaLightbox();
     await initializeGalleryPage(activeGalleryMonth);
@@ -1875,10 +2503,16 @@ async function handleGalleryUpload() {
   updateUploadStatus(`Upload fuer ${formatMonthLabel(monthId)} wird vorbereitet...`);
 
   try {
+    let firstUploadedPath = "";
+
     for (let index = 0; index < mediaFiles.length; index += 1) {
       const file = mediaFiles[index];
       const relativePath = buildUploadRelativePath(file, monthId);
       const targetPath = `${GALLERY_STORAGE_ROOT}/${monthId}/${relativePath}`;
+
+      if (!firstUploadedPath) {
+        firstUploadedPath = targetPath;
+      }
 
       await uploadFileToStorage(targetPath, file);
 
@@ -1893,6 +2527,16 @@ async function handleGalleryUpload() {
       input.value = "";
     });
     delete document.body.dataset.activeUploadInputId;
+
+    await publishActivity({
+      section: "gallery",
+      action: "upload",
+      title: `${getCurrentActorLabel()} hat die Galerie erweitert`,
+      description: `${formatMonthLabel(monthId)} · ${mediaFiles.length} neue ${mediaFiles.length === 1 ? "Datei" : "Dateien"}`,
+      monthId: monthId,
+      storagePath: firstUploadedPath
+    });
+
     updateUploadStatus(`Upload abgeschlossen: ${mediaFiles.length} Dateien fuer ${formatMonthLabel(monthId)}.`);
     resetUploadProgress();
   } catch (error) {
