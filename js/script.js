@@ -6,6 +6,7 @@ const LEGACY_LOGIN_TIME_KEY = "loginTimestamp";
 const ACTIVITY_COLLECTION = "activity";
 const ACTIVITY_RECEIPTS_COLLECTION = "activityReceipts";
 const ACTIVITY_FEED_LIMIT = 100;
+const ACTIVITY_SUMMARY_POPUP_KEY = "activity-summary";
 const GALLERY_STORAGE_ROOT = window.galleryStorageRoot || "gallery";
 const GALLERY_START_YEAR = 2025;
 const GALLERY_START_MONTH = 4;
@@ -344,58 +345,142 @@ function getUnseenActivities() {
     });
 }
 
+function getActivitySummaryParts(activities) {
+  const sections = [
+    { key: "gallery", label: "Galerie" },
+    { key: "calendar", label: "Kalender" },
+    { key: "todo", label: "Liste" }
+  ];
+
+  return sections
+    .map(function(section) {
+      const count = activities.filter(function(activity) {
+        return activity.section === section.key;
+      }).length;
+
+      return count ? `${section.label} ${count}` : "";
+    })
+    .filter(Boolean);
+}
+
+function getFirstActivityTargetUrl(activities) {
+  const targetActivity = activities.find(function(activity) {
+    return Boolean(buildActivityTargetUrl(activity));
+  });
+
+  return targetActivity ? buildActivityTargetUrl(targetActivity) : "";
+}
+
+function buildActivityPopupConfig(activities) {
+  const normalizedActivities = (activities || []).filter(Boolean);
+
+  if (!normalizedActivities.length) {
+    return null;
+  }
+
+  if (normalizedActivities.length === 1) {
+    const activity = normalizedActivities[0];
+
+    return {
+      popupId: activity.id,
+      signature: activity.id,
+      targetUrl: buildActivityTargetUrl(activity),
+      activityIds: [activity.id],
+      title: activity.title || "Neue Änderung",
+      description: activity.description || "Tippe hier, um direkt zur Änderung zu springen.",
+      linkText: "Öffnen"
+    };
+  }
+
+  const summaryParts = getActivitySummaryParts(normalizedActivities);
+
+  return {
+    popupId: ACTIVITY_SUMMARY_POPUP_KEY,
+    signature: normalizedActivities.map(function(activity) {
+      return activity.id;
+    }).join("|"),
+    targetUrl: getFirstActivityTargetUrl(normalizedActivities),
+    activityIds: normalizedActivities.map(function(activity) {
+      return activity.id;
+    }),
+    title: `${normalizedActivities.length} ungesehene Änderungen`,
+    description: summaryParts.length
+      ? `${summaryParts.join(" · ")}. Tippe hier, um zur neuesten Änderung zu springen.`
+      : "Tippe hier, um zur neuesten Änderung zu springen.",
+    linkText: "Neueste öffnen"
+  };
+}
+
 function syncActivityPopups() {
   if (!canShowActivityPopup() || !activityFeedLoaded || !activityReceiptsLoaded) {
     return;
   }
 
   const unseenActivities = getUnseenActivities();
-  const unseenActivityIds = new Set(unseenActivities.map(function(activity) {
-    return activity.id;
-  }));
+  const popupConfig = buildActivityPopupConfig(unseenActivities);
+  const activePopupIds = new Set(popupConfig ? [popupConfig.popupId] : []);
 
-  activeActivityPopups.forEach(function(popup, activityId) {
-    if (!unseenActivityIds.has(activityId)) {
+  if (popupConfig) {
+    const existingPopup = activeActivityPopups.get(popupConfig.popupId);
+    if (existingPopup && existingPopup.dataset.signature !== popupConfig.signature) {
+      activeActivityPopups.delete(popupConfig.popupId);
+      removeActivityPopup(existingPopup);
+    }
+  }
+
+  activeActivityPopups.forEach(function(popup, popupId) {
+    if (!activePopupIds.has(popupId)) {
       removeActivityPopup(popup);
     }
   });
 
-  unseenActivities.forEach(function(activity) {
-    showActivityPopup(activity);
-  });
+  if (popupConfig) {
+    showActivityPopup(popupConfig);
+  }
 }
 
-async function markActivityAsSeen(activityId) {
+async function markActivitiesAsSeen(activityIds) {
   const currentUser = authService && authService.currentUser;
+  const uniqueActivityIds = Array.from(new Set((activityIds || []).filter(Boolean)));
 
-  if (!currentUser || !activityId) {
+  if (!currentUser || !uniqueActivityIds.length) {
     return false;
   }
 
-  seenActivityIds.add(activityId);
+  uniqueActivityIds.forEach(function(activityId) {
+    seenActivityIds.add(activityId);
+  });
   syncActivityPopups();
 
   try {
-    await setDoc(doc(ACTIVITY_RECEIPTS_COLLECTION, buildActivityReceiptDocId(currentUser.uid, activityId)), {
-      userUid: currentUser.uid,
-      activityId: activityId,
-      seenAtMs: Date.now()
-    });
+    await Promise.all(uniqueActivityIds.map(function(activityId) {
+      return setDoc(doc(ACTIVITY_RECEIPTS_COLLECTION, buildActivityReceiptDocId(currentUser.uid, activityId)), {
+        userUid: currentUser.uid,
+        activityId: activityId,
+        seenAtMs: Date.now()
+      });
+    }));
     return true;
   } catch (error) {
     console.error("Aktivitaetsstatus konnte nicht gespeichert werden:", error);
-    seenActivityIds.delete(activityId);
+    uniqueActivityIds.forEach(function(activityId) {
+      seenActivityIds.delete(activityId);
+    });
     syncActivityPopups();
     return false;
   }
 }
 
-function showActivityPopup(activity) {
-  if (!canShowActivityPopup() || !activity || !activity.id || activeActivityPopups.has(activity.id)) {
+async function markActivityAsSeen(activityId) {
+  return markActivitiesAsSeen([activityId]);
+}
+
+function showActivityPopup(popupConfig) {
+  if (!canShowActivityPopup() || !popupConfig || !popupConfig.popupId || activeActivityPopups.has(popupConfig.popupId)) {
     return;
   }
 
-  const targetUrl = buildActivityTargetUrl(activity);
+  const targetUrl = popupConfig.targetUrl;
   if (!targetUrl) {
     return;
   }
@@ -403,7 +488,8 @@ function showActivityPopup(activity) {
   const stack = ensureActivityPopupStack();
   const popup = document.createElement("article");
   popup.className = "activity-popup";
-  popup.dataset.activityId = activity.id;
+  popup.dataset.activityId = popupConfig.popupId;
+  popup.dataset.signature = popupConfig.signature || popupConfig.popupId;
 
   const dismissButton = document.createElement("button");
   dismissButton.type = "button";
@@ -417,24 +503,24 @@ function showActivityPopup(activity) {
 
   const title = document.createElement("strong");
   title.className = "activity-popup-title";
-  title.textContent = activity.title || "Neue Änderung";
+  title.textContent = popupConfig.title || "Neue Änderung";
 
   const body = document.createElement("p");
   body.className = "activity-popup-body";
-  body.textContent = activity.description || "Tippe hier, um direkt zur Änderung zu springen.";
+  body.textContent = popupConfig.description || "Tippe hier, um direkt zur Änderung zu springen.";
 
   const linkHint = document.createElement("span");
   linkHint.className = "activity-popup-link";
-  linkHint.textContent = "Öffnen";
+  linkHint.textContent = popupConfig.linkText || "Öffnen";
 
   dismissButton.addEventListener("click", function(event) {
     event.preventDefault();
     event.stopPropagation();
-    void markActivityAsSeen(activity.id);
+    void markActivitiesAsSeen(popupConfig.activityIds);
   });
 
   openButton.addEventListener("click", async function() {
-    await markActivityAsSeen(activity.id);
+    await markActivitiesAsSeen(popupConfig.activityIds);
     window.location.href = targetUrl;
   });
 
@@ -445,7 +531,7 @@ function showActivityPopup(activity) {
   popup.appendChild(openButton);
 
   stack.appendChild(popup);
-  activeActivityPopups.set(activity.id, popup);
+  activeActivityPopups.set(popupConfig.popupId, popup);
 
   requestAnimationFrame(function() {
     popup.classList.add("visible");
