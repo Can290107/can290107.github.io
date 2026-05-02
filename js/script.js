@@ -43,7 +43,8 @@ let pendingToolsMonthId = "";
 let pendingGalleryTargetPath = "";
 let pendingGalleryTargetMonthId = "";
 const seenActivityIds = new Set();
-const activeActivityPopups = new Map();
+let activeActivityPopup = null;
+let activityPopupExpanded = false;
 
 document.addEventListener("DOMContentLoaded", function() {
   initializePendingNavigationTargets();
@@ -249,14 +250,15 @@ function removeActivityPopup(popup) {
     return;
   }
 
-  const activityId = popup.dataset.activityId || "";
   popup.dataset.removing = "true";
   popup.classList.remove("visible");
 
+  if (popup === activeActivityPopup) {
+    activeActivityPopup = null;
+    activityPopupExpanded = false;
+  }
+
   setTimeout(function() {
-    if (activityId) {
-      activeActivityPopups.delete(activityId);
-    }
     popup.remove();
   }, 220);
 }
@@ -337,7 +339,11 @@ function getUnseenActivities() {
         return false;
       }
 
-      return !seenActivityIds.has(activity.id);
+      if (seenActivityIds.has(activity.id)) {
+        return false;
+      }
+
+      return Boolean(buildActivityTargetUrl(activity));
     })
     .sort(function(firstActivity, secondActivity) {
       return (secondActivity.createdAtMs || 0) - (firstActivity.createdAtMs || 0);
@@ -350,70 +356,71 @@ function syncActivityPopups() {
   }
 
   const unseenActivities = getUnseenActivities();
-  const unseenActivityIds = new Set(unseenActivities.map(function(activity) {
-    return activity.id;
-  }));
 
-  activeActivityPopups.forEach(function(popup, activityId) {
-    if (!unseenActivityIds.has(activityId)) {
-      removeActivityPopup(popup);
+  if (!unseenActivities.length) {
+    if (activeActivityPopup) {
+      removeActivityPopup(activeActivityPopup);
     }
-  });
+    return;
+  }
 
-  unseenActivities.forEach(function(activity) {
-    showActivityPopup(activity);
-  });
+  showActivityPopup(unseenActivities);
 }
 
-async function markActivityAsSeen(activityId) {
+async function markActivitiesAsSeen(activityIds) {
   const currentUser = authService && authService.currentUser;
+  const normalizedIds = Array.from(new Set((activityIds || []).filter(Boolean)));
 
-  if (!currentUser || !activityId) {
+  if (!currentUser || !normalizedIds.length) {
     return false;
   }
 
-  seenActivityIds.add(activityId);
+  const seenAtMs = Date.now();
+
+  normalizedIds.forEach(function(activityId) {
+    seenActivityIds.add(activityId);
+  });
   syncActivityPopups();
 
-  try {
-    await setDoc(doc(ACTIVITY_RECEIPTS_COLLECTION, buildActivityReceiptDocId(currentUser.uid, activityId)), {
-      userUid: currentUser.uid,
-      activityId: activityId,
-      seenAtMs: Date.now()
+  const failedIds = [];
+
+  await Promise.all(normalizedIds.map(async function(activityId) {
+    try {
+      await setDoc(doc(ACTIVITY_RECEIPTS_COLLECTION, buildActivityReceiptDocId(currentUser.uid, activityId)), {
+        userUid: currentUser.uid,
+        activityId: activityId,
+        seenAtMs: seenAtMs
+      });
+    } catch (error) {
+      failedIds.push(activityId);
+      console.error("Aktivitaetsstatus konnte nicht gespeichert werden:", error);
+    }
+  }));
+
+  if (failedIds.length) {
+    failedIds.forEach(function(activityId) {
+      seenActivityIds.delete(activityId);
     });
-    return true;
-  } catch (error) {
-    console.error("Aktivitaetsstatus konnte nicht gespeichert werden:", error);
-    seenActivityIds.delete(activityId);
     syncActivityPopups();
     return false;
   }
+
+  return true;
 }
 
-function showActivityPopup(activity) {
-  if (!canShowActivityPopup() || !activity || !activity.id || activeActivityPopups.has(activity.id)) {
-    return;
-  }
+async function markActivityAsSeen(activityId) {
+  return markActivitiesAsSeen([activityId]);
+}
 
+function createActivityContentButton(activity, buttonClassName) {
   const targetUrl = buildActivityTargetUrl(activity);
-  if (!targetUrl) {
-    return;
+  if (!activity || !activity.id || !targetUrl) {
+    return null;
   }
-
-  const stack = ensureActivityPopupStack();
-  const popup = document.createElement("article");
-  popup.className = "activity-popup";
-  popup.dataset.activityId = activity.id;
-
-  const dismissButton = document.createElement("button");
-  dismissButton.type = "button";
-  dismissButton.className = "activity-popup-dismiss";
-  dismissButton.setAttribute("aria-label", "Benachrichtigung schliessen");
-  dismissButton.textContent = "×";
 
   const openButton = document.createElement("button");
   openButton.type = "button";
-  openButton.className = "activity-popup-open";
+  openButton.className = buttonClassName;
 
   const title = document.createElement("strong");
   title.className = "activity-popup-title";
@@ -427,12 +434,6 @@ function showActivityPopup(activity) {
   linkHint.className = "activity-popup-link";
   linkHint.textContent = "Öffnen";
 
-  dismissButton.addEventListener("click", function(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    void markActivityAsSeen(activity.id);
-  });
-
   openButton.addEventListener("click", async function() {
     await markActivityAsSeen(activity.id);
     window.location.href = targetUrl;
@@ -441,15 +442,143 @@ function showActivityPopup(activity) {
   openButton.appendChild(title);
   openButton.appendChild(body);
   openButton.appendChild(linkHint);
-  popup.appendChild(dismissButton);
-  popup.appendChild(openButton);
+  return openButton;
+}
 
-  stack.appendChild(popup);
-  activeActivityPopups.set(activity.id, popup);
+function createActivityItem(activity) {
+  const itemButton = createActivityContentButton(activity, "activity-popup-item-open");
+  if (!itemButton) {
+    return null;
+  }
 
-  requestAnimationFrame(function() {
-    popup.classList.add("visible");
+  const item = document.createElement("article");
+  item.className = "activity-popup-item";
+
+  const dismissButton = document.createElement("button");
+  dismissButton.type = "button";
+  dismissButton.className = "activity-popup-item-dismiss";
+  dismissButton.setAttribute("aria-label", "Einzelne Benachrichtigung schliessen");
+  dismissButton.textContent = "×";
+  dismissButton.addEventListener("click", function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    void markActivityAsSeen(activity.id);
   });
+
+  item.appendChild(itemButton);
+  item.appendChild(dismissButton);
+  return item;
+}
+
+function createActivitySummaryToggle(unseenActivities) {
+  const toggleButton = document.createElement("button");
+  const activityCount = unseenActivities.length;
+  const titleText = `${activityCount} ungesehene ${activityCount === 1 ? "Änderung" : "Änderungen"}`;
+  const bodyText = activityPopupExpanded
+    ? "Tippe hier, um die Liste wieder kompakt anzuzeigen."
+    : `Tippe hier, um alle ${activityCount} Meldungen aufzuklappen.`;
+
+  toggleButton.type = "button";
+  toggleButton.className = "activity-popup-summary-toggle";
+  toggleButton.addEventListener("click", function() {
+    activityPopupExpanded = !activityPopupExpanded;
+    syncActivityPopups();
+  });
+
+  const title = document.createElement("strong");
+  title.className = "activity-popup-title";
+  title.textContent = titleText;
+
+  const body = document.createElement("p");
+  body.className = "activity-popup-body";
+  body.textContent = bodyText;
+
+  const linkHint = document.createElement("span");
+  linkHint.className = "activity-popup-link";
+  linkHint.textContent = activityPopupExpanded ? "Weniger anzeigen" : "Alle anzeigen";
+
+  toggleButton.appendChild(title);
+  toggleButton.appendChild(body);
+  toggleButton.appendChild(linkHint);
+  return toggleButton;
+}
+
+function showActivityPopup(unseenActivities) {
+  if (!canShowActivityPopup() || !unseenActivities || !unseenActivities.length) {
+    return;
+  }
+
+  const stack = ensureActivityPopupStack();
+  const isSingleActivity = unseenActivities.length === 1;
+  const popup = activeActivityPopup || document.createElement("article");
+
+  if (isSingleActivity) {
+    activityPopupExpanded = false;
+  }
+
+  popup.className = "activity-popup";
+  popup.dataset.grouped = isSingleActivity ? "false" : "true";
+  popup.classList.toggle("activity-popup-expanded", !isSingleActivity && activityPopupExpanded);
+  popup.replaceChildren();
+
+  const dismissButton = document.createElement("button");
+  dismissButton.type = "button";
+  dismissButton.className = "activity-popup-dismiss";
+  dismissButton.setAttribute("aria-label", isSingleActivity ? "Benachrichtigung schliessen" : "Alle Benachrichtigungen schliessen");
+  dismissButton.textContent = "×";
+
+  dismissButton.addEventListener("click", function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (isSingleActivity) {
+      void markActivityAsSeen(unseenActivities[0].id);
+      return;
+    }
+
+    void markActivitiesAsSeen(unseenActivities.map(function(activity) {
+      return activity.id;
+    }));
+  });
+
+  popup.appendChild(dismissButton);
+
+  if (isSingleActivity) {
+    const openButton = createActivityContentButton(unseenActivities[0], "activity-popup-open");
+    if (!openButton) {
+      return;
+    }
+    popup.appendChild(openButton);
+  } else {
+    popup.appendChild(createActivitySummaryToggle(unseenActivities));
+
+    if (activityPopupExpanded) {
+      const list = document.createElement("div");
+      list.className = "activity-popup-list";
+
+      unseenActivities.forEach(function(activity) {
+        const item = createActivityItem(activity);
+        if (item) {
+          list.appendChild(item);
+        }
+      });
+
+      popup.appendChild(list);
+    }
+  }
+
+  if (!activeActivityPopup) {
+    activeActivityPopup = popup;
+    stack.appendChild(popup);
+
+    requestAnimationFrame(function() {
+      popup.classList.add("visible");
+    });
+    return;
+  }
+
+  if (!stack.contains(popup)) {
+    stack.appendChild(popup);
+  }
 }
 
 async function publishActivity(payload) {
@@ -493,7 +622,8 @@ function resetActivityNotifications() {
   activityReceiptsLoaded = false;
   activityFeedItems = [];
   seenActivityIds.clear();
-  activeActivityPopups.clear();
+  activeActivityPopup = null;
+  activityPopupExpanded = false;
 
   const stack = document.getElementById("activityPopupStack");
   if (stack) {

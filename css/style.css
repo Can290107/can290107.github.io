@@ -173,6 +173,7 @@ box-shadow:0 0 25px rgba(236,72,153,0.7);
   box-shadow:0 20px 46px rgba(236,72,153,0.18);
 }
 
+.activity-popup-summary-toggle,
 .activity-popup-open{
   width:100%;
   margin:0;
@@ -184,7 +185,12 @@ box-shadow:0 0 25px rgba(236,72,153,0.7);
   cursor:pointer;
 }
 
+.activity-popup-summary-toggle{
+  padding-right:56px;
+}
+
 .activity-popup-open:focus-visible,
+.activity-popup-summary-toggle:focus-visible,
 .activity-popup-dismiss:focus-visible{
   outline:2px solid rgba(249,168,212,0.9);
   outline-offset:-2px;
@@ -234,6 +240,64 @@ box-shadow:0 0 25px rgba(236,72,153,0.7);
   font-size:13px;
   font-weight:600;
   color:#f9a8d4;
+}
+
+.activity-popup-expanded .activity-popup-summary-toggle{
+  border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.activity-popup-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:12px;
+}
+
+.activity-popup-item{
+  position:relative;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.05);
+  overflow:hidden;
+}
+
+.activity-popup-item-open{
+  width:100%;
+  margin:0;
+  padding:14px 44px 14px 14px;
+  border:none;
+  background:transparent;
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+
+.activity-popup-item-open:focus-visible,
+.activity-popup-item-dismiss:focus-visible{
+  outline:2px solid rgba(249,168,212,0.9);
+  outline-offset:-2px;
+}
+
+.activity-popup-item-dismiss{
+  position:absolute;
+  top:8px;
+  right:8px;
+  width:28px;
+  height:28px;
+  border:none;
+  border-radius:999px;
+  background:rgba(255,255,255,0.1);
+  color:white;
+  font-size:18px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+
+.activity-popup-item-dismiss:hover{
+  background:rgba(236,72,153,0.24);
 }
 
 .activity-target-highlight{
@@ -1688,13 +1752,26 @@ ul{
     border-radius:16px;
   }
 
+  .activity-popup-summary-toggle,
   .activity-popup-open {
     padding:14px 16px 16px;
+  }
+
+  .activity-popup-summary-toggle {
+    padding-right:52px;
   }
 
   .activity-popup-dismiss {
     top:8px;
     right:8px;
+  }
+
+  .activity-popup-list {
+    padding:10px;
+  }
+
+  .activity-popup-item-open {
+    padding:13px 40px 13px 13px;
   }
 
   .gallery-grid {
