@@ -4,8 +4,8 @@ const AUTH_USERNAME_KEY = "authUsername";
 const LEGACY_LOGIN_USER_KEY = "loggedInUser";
 const LEGACY_LOGIN_TIME_KEY = "loginTimestamp";
 const ACTIVITY_COLLECTION = "activity";
-const ACTIVITY_FEED_LIMIT = 25;
-const ACTIVITY_POPUP_DURATION_MS = 9000;
+const ACTIVITY_RECEIPTS_COLLECTION = "activityReceipts";
+const ACTIVITY_FEED_LIMIT = 100;
 const GALLERY_STORAGE_ROOT = window.galleryStorageRoot || "gallery";
 const GALLERY_START_YEAR = 2025;
 const GALLERY_START_MONTH = 4;
@@ -24,6 +24,7 @@ let activeLightboxItem = null;
 let todoUnsubscribe = null;
 let eventsUnsubscribe = null;
 let activityUnsubscribe = null;
+let activityReceiptsUnsubscribe = null;
 let calendarEvents = {};
 let pageFeaturesInitialized = false;
 let galleryMonths = [];
@@ -32,7 +33,9 @@ let gallerySource = "storage";
 let gallerySortMode = "newest";
 let galleryEmptyStateTitle = "Noch keine Erinnerungen fuer diesen Monat";
 let galleryEmptyStateMessage = "Lade den Monatsordner in Firebase Storage hoch oder nutze fuer lokal gespeicherte Dateien das bestehende Galerie-Manifest als Fallback.";
-let activityFeedPrimed = false;
+let activityFeedLoaded = false;
+let activityReceiptsLoaded = false;
+let activityFeedItems = [];
 let pendingTodoTargetId = "";
 let pendingEventTargetKey = "";
 let pendingToolsSection = "";
@@ -40,6 +43,7 @@ let pendingToolsMonthId = "";
 let pendingGalleryTargetPath = "";
 let pendingGalleryTargetMonthId = "";
 const seenActivityIds = new Set();
+const activeActivityPopups = new Map();
 
 document.addEventListener("DOMContentLoaded", function() {
   initializePendingNavigationTargets();
@@ -245,10 +249,14 @@ function removeActivityPopup(popup) {
     return;
   }
 
+  const activityId = popup.dataset.activityId || "";
   popup.dataset.removing = "true";
   popup.classList.remove("visible");
 
   setTimeout(function() {
+    if (activityId) {
+      activeActivityPopups.delete(activityId);
+    }
     popup.remove();
   }, 220);
 }
@@ -302,8 +310,77 @@ function buildActivityTargetUrl(activity) {
   return "";
 }
 
+function buildActivityReceiptDocId(userUid, activityId) {
+  return `${userUid}__${activityId}`;
+}
+
+function normalizeActivityRecord(docItem) {
+  const data = docItem.data() || {};
+  return Object.assign({ id: docItem.id }, data);
+}
+
+function getUnseenActivities() {
+  return activityFeedItems
+    .filter(function(activity) {
+      if (!activity || !activity.id) {
+        return false;
+      }
+
+      return !seenActivityIds.has(activity.id);
+    })
+    .sort(function(firstActivity, secondActivity) {
+      return (secondActivity.createdAtMs || 0) - (firstActivity.createdAtMs || 0);
+    });
+}
+
+function syncActivityPopups() {
+  if (!canShowActivityPopup() || !activityFeedLoaded || !activityReceiptsLoaded) {
+    return;
+  }
+
+  const unseenActivities = getUnseenActivities();
+  const unseenActivityIds = new Set(unseenActivities.map(function(activity) {
+    return activity.id;
+  }));
+
+  activeActivityPopups.forEach(function(popup, activityId) {
+    if (!unseenActivityIds.has(activityId)) {
+      removeActivityPopup(popup);
+    }
+  });
+
+  unseenActivities.forEach(function(activity) {
+    showActivityPopup(activity);
+  });
+}
+
+async function markActivityAsSeen(activityId) {
+  const currentUser = authService && authService.currentUser;
+
+  if (!currentUser || !activityId) {
+    return false;
+  }
+
+  seenActivityIds.add(activityId);
+  syncActivityPopups();
+
+  try {
+    await setDoc(doc(ACTIVITY_RECEIPTS_COLLECTION, buildActivityReceiptDocId(currentUser.uid, activityId)), {
+      userUid: currentUser.uid,
+      activityId: activityId,
+      seenAtMs: Date.now()
+    });
+    return true;
+  } catch (error) {
+    console.error("Aktivitaetsstatus konnte nicht gespeichert werden:", error);
+    seenActivityIds.delete(activityId);
+    syncActivityPopups();
+    return false;
+  }
+}
+
 function showActivityPopup(activity) {
-  if (!canShowActivityPopup()) {
+  if (!canShowActivityPopup() || !activity || !activity.id || activeActivityPopups.has(activity.id)) {
     return;
   }
 
@@ -313,9 +390,19 @@ function showActivityPopup(activity) {
   }
 
   const stack = ensureActivityPopupStack();
-  const popup = document.createElement("button");
-  popup.type = "button";
+  const popup = document.createElement("article");
   popup.className = "activity-popup";
+  popup.dataset.activityId = activity.id;
+
+  const dismissButton = document.createElement("button");
+  dismissButton.type = "button";
+  dismissButton.className = "activity-popup-dismiss";
+  dismissButton.setAttribute("aria-label", "Benachrichtigung schliessen");
+  dismissButton.textContent = "×";
+
+  const openButton = document.createElement("button");
+  openButton.type = "button";
+  openButton.className = "activity-popup-open";
 
   const title = document.createElement("strong");
   title.className = "activity-popup-title";
@@ -329,22 +416,29 @@ function showActivityPopup(activity) {
   linkHint.className = "activity-popup-link";
   linkHint.textContent = "Öffnen";
 
-  popup.appendChild(title);
-  popup.appendChild(body);
-  popup.appendChild(linkHint);
-  popup.addEventListener("click", function() {
+  dismissButton.addEventListener("click", function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    void markActivityAsSeen(activity.id);
+  });
+
+  openButton.addEventListener("click", async function() {
+    await markActivityAsSeen(activity.id);
     window.location.href = targetUrl;
   });
 
+  openButton.appendChild(title);
+  openButton.appendChild(body);
+  openButton.appendChild(linkHint);
+  popup.appendChild(dismissButton);
+  popup.appendChild(openButton);
+
   stack.appendChild(popup);
+  activeActivityPopups.set(activity.id, popup);
 
   requestAnimationFrame(function() {
     popup.classList.add("visible");
   });
-
-  setTimeout(function() {
-    removeActivityPopup(popup);
-  }, ACTIVITY_POPUP_DURATION_MS);
 }
 
 async function publishActivity(payload) {
@@ -379,8 +473,16 @@ function resetActivityNotifications() {
     activityUnsubscribe = null;
   }
 
-  activityFeedPrimed = false;
+  if (activityReceiptsUnsubscribe) {
+    activityReceiptsUnsubscribe();
+    activityReceiptsUnsubscribe = null;
+  }
+
+  activityFeedLoaded = false;
+  activityReceiptsLoaded = false;
+  activityFeedItems = [];
   seenActivityIds.clear();
+  activeActivityPopups.clear();
 
   const stack = document.getElementById("activityPopupStack");
   if (stack) {
@@ -389,43 +491,42 @@ function resetActivityNotifications() {
 }
 
 function initializeActivityNotifications() {
-  if (activityUnsubscribe || getCurrentPageName() !== "index.html") {
+  if (activityUnsubscribe || activityReceiptsUnsubscribe || getCurrentPageName() !== "index.html") {
     return;
   }
+
+  const currentUser = authService && authService.currentUser;
+  if (!currentUser) {
+    return;
+  }
+
+  activityReceiptsUnsubscribe = collection(ACTIVITY_RECEIPTS_COLLECTION)
+    .where("userUid", "==", currentUser.uid)
+    .onSnapshot(function(snapshot) {
+      seenActivityIds.clear();
+
+      snapshot.forEach(function(docItem) {
+        const receipt = docItem.data();
+        if (receipt && receipt.activityId) {
+          seenActivityIds.add(receipt.activityId);
+        }
+      });
+
+      activityReceiptsLoaded = true;
+      syncActivityPopups();
+    }, function(error) {
+      console.error("Aktivitaetsstatus konnte nicht geladen werden:", error);
+    });
 
   activityUnsubscribe = collection(ACTIVITY_COLLECTION)
     .orderBy("createdAtMs", "desc")
     .limit(ACTIVITY_FEED_LIMIT)
     .onSnapshot(function(snapshot) {
-      if (!activityFeedPrimed) {
-        snapshot.forEach(function(docItem) {
-          seenActivityIds.add(docItem.id);
-        });
-        activityFeedPrimed = true;
-        return;
-      }
-
-      const currentUser = authService && authService.currentUser;
-      const freshActivities = [];
-
-      snapshot.docChanges().forEach(function(change) {
-        if (change.type !== "added" || seenActivityIds.has(change.doc.id)) {
-          return;
-        }
-
-        seenActivityIds.add(change.doc.id);
-        const activity = change.doc.data();
-
-        if (currentUser && activity.actorUid === currentUser.uid) {
-          return;
-        }
-
-        freshActivities.push(activity);
+      activityFeedItems = snapshot.docs.map(function(docItem) {
+        return normalizeActivityRecord(docItem);
       });
-
-      freshActivities.reverse().forEach(function(activity) {
-        showActivityPopup(activity);
-      });
+      activityFeedLoaded = true;
+      syncActivityPopups();
     }, function(error) {
       console.error("Aktivitäts-Feed konnte nicht geladen werden:", error);
     });
