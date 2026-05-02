@@ -320,9 +320,20 @@ function normalizeActivityRecord(docItem) {
 }
 
 function getUnseenActivities() {
+  const currentUser = authService && authService.currentUser;
+  const currentActorKey = getCurrentActorKey();
+
   return activityFeedItems
     .filter(function(activity) {
       if (!activity || !activity.id) {
+        return false;
+      }
+
+      if (currentUser && activity.actorUid && activity.actorUid === currentUser.uid) {
+        return false;
+      }
+
+      if (!activity.actorUid && currentActorKey && activity.actorKey === currentActorKey) {
         return false;
       }
 
