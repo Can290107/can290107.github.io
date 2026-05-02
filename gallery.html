@@ -45,7 +45,16 @@
 
       <div class="gallery-toolbar">
         <div id="galleryMonthTabs" class="gallery-month-tabs" aria-label="Monate auswählen"></div>
-        <p id="gallerySummary" class="gallery-summary"></p>
+        <div class="gallery-toolbar-meta">
+          <p id="gallerySummary" class="gallery-summary"></p>
+          <label class="gallery-sort-field" for="gallerySortSelect">
+            <span>Sortierung</span>
+            <select id="gallerySortSelect">
+              <option value="newest">Zuletzt hinzugefügt</option>
+              <option value="oldest">Älteste zuerst</option>
+            </select>
+          </label>
+        </div>
       </div>
 
       <div id="galleryGrid" class="gallery-grid" aria-live="polite"></div>
@@ -63,6 +72,7 @@
       <div id="mediaLightboxContent" class="media-lightbox-content"></div>
       <p id="mediaLightboxCaption" class="media-lightbox-caption"></p>
       <div class="media-lightbox-actions">
+        <button id="renameGalleryItemBtn" class="media-lightbox-rename hidden" type="button" onclick="renameActiveGalleryItem()">Namen ändern</button>
         <button id="deleteGalleryItemBtn" class="media-lightbox-delete hidden" type="button" onclick="deleteActiveGalleryItem()">Datei löschen</button>
       </div>
     </div>

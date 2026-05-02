@@ -25,6 +25,7 @@ let pageFeaturesInitialized = false;
 let galleryMonths = [];
 let galleryItemsCache = {};
 let gallerySource = "storage";
+let gallerySortMode = "newest";
 let galleryEmptyStateTitle = "Noch keine Erinnerungen fuer diesen Monat";
 let galleryEmptyStateMessage = "Lade den Monatsordner in Firebase Storage hoch oder nutze fuer lokal gespeicherte Dateien das bestehende Galerie-Manifest als Fallback.";
 
@@ -1068,14 +1069,27 @@ async function getStorageGalleryItems(monthId) {
 
   const items = await Promise.all(supportedItemRefs.map(async function(itemRef) {
     const mediaType = detectMediaTypeFromName(itemRef.name);
-    const downloadUrl = await itemRef.getDownloadURL();
-    const caption = formatCaptionFromName(itemRef.name);
+    const [downloadUrl, metadata] = await Promise.all([
+      itemRef.getDownloadURL(),
+      itemRef.getMetadata()
+    ]);
+    const defaultCaption = formatCaptionFromName(itemRef.name);
+    const customMetadata = metadata && metadata.customMetadata ? metadata.customMetadata : {};
+    const customDisplayName = typeof customMetadata.displayName === "string"
+      ? customMetadata.displayName.trim()
+      : "";
+    const caption = customDisplayName || defaultCaption;
+    const createdAtMs = Date.parse((metadata && metadata.timeCreated) || "");
 
     return {
       type: mediaType,
       src: downloadUrl,
       alt: caption,
       caption: caption,
+      defaultCaption: defaultCaption,
+      originalName: itemRef.name,
+      customMetadata: customMetadata,
+      createdAtMs: Number.isFinite(createdAtMs) ? createdAtMs : null,
       sortKey: itemRef.fullPath,
       storagePath: itemRef.fullPath
     };
@@ -1091,11 +1105,70 @@ async function getStorageGalleryItems(monthId) {
       src: item.src,
       alt: item.alt,
       caption: item.caption,
+      defaultCaption: item.defaultCaption || item.caption,
+      originalName: item.originalName || "",
+      customMetadata: item.customMetadata || {},
+      createdAtMs: Number.isFinite(item.createdAtMs) ? item.createdAtMs : null,
+      sortKey: item.sortKey || item.storagePath || item.src || item.caption,
       storagePath: item.storagePath || ""
     };
   });
 
   return galleryItemsCache[monthId];
+}
+
+function getGalleryItemFallbackSortValue(item) {
+  return String(item.sortKey || item.storagePath || item.src || item.caption || item.alt || "");
+}
+
+function sortGalleryItems(items) {
+  return items.slice().sort(function(a, b) {
+    const aCreatedAt = Number.isFinite(a.createdAtMs) ? a.createdAtMs : null;
+    const bCreatedAt = Number.isFinite(b.createdAtMs) ? b.createdAtMs : null;
+
+    if (aCreatedAt !== null && bCreatedAt !== null && aCreatedAt !== bCreatedAt) {
+      return gallerySortMode === "newest"
+        ? bCreatedAt - aCreatedAt
+        : aCreatedAt - bCreatedAt;
+    }
+
+    if (aCreatedAt !== null && bCreatedAt === null) {
+      return gallerySortMode === "newest" ? -1 : 1;
+    }
+
+    if (aCreatedAt === null && bCreatedAt !== null) {
+      return gallerySortMode === "newest" ? 1 : -1;
+    }
+
+    const aFallback = getGalleryItemFallbackSortValue(a);
+    const bFallback = getGalleryItemFallbackSortValue(b);
+
+    return gallerySortMode === "newest"
+      ? bFallback.localeCompare(aFallback)
+      : aFallback.localeCompare(bFallback);
+  });
+}
+
+function initializeGallerySortControl() {
+  const sortSelect = document.getElementById("gallerySortSelect");
+  if (!sortSelect) {
+    return;
+  }
+
+  sortSelect.value = gallerySortMode;
+
+  if (sortSelect.dataset.bound === "true") {
+    return;
+  }
+
+  sortSelect.dataset.bound = "true";
+  sortSelect.addEventListener("change", function() {
+    gallerySortMode = sortSelect.value === "oldest" ? "oldest" : "newest";
+
+    if (activeGalleryMonth) {
+      renderGalleryItems(activeGalleryMonth);
+    }
+  });
 }
 
 async function initializeGalleryPage(preferredMonthId) {
@@ -1155,6 +1228,7 @@ async function initializeGalleryPage(preferredMonthId) {
     }
   }
 
+  initializeGallerySortControl();
   renderGalleryMonthTabs();
 
   if (!galleryMonths.length) {
@@ -1246,6 +1320,7 @@ async function renderGalleryItems(monthId) {
   }
 
   showGalleryEmptyState(false);
+  items = sortGalleryItems(items);
 
   items.forEach(function(item) {
     const card = document.createElement("article");
@@ -1366,16 +1441,26 @@ function initializeMediaLightbox() {
   });
 }
 
-function updateLightboxDeleteButton(item, isBusy) {
+function updateLightboxActionButtons(item, busyAction) {
+  const renameBtn = document.getElementById("renameGalleryItemBtn");
   const deleteBtn = document.getElementById("deleteGalleryItemBtn");
+  const canModify = Boolean(item && item.storagePath && storageRefFactory);
+  const isRenameBusy = busyAction === "rename";
+  const isDeleteBusy = busyAction === "delete";
+
+  if (renameBtn) {
+    renameBtn.classList.toggle("hidden", !canModify);
+    renameBtn.disabled = !canModify || Boolean(busyAction);
+    renameBtn.textContent = isRenameBusy ? "Speichern..." : "Namen ändern";
+  }
+
   if (!deleteBtn) {
     return;
   }
 
-  const canDelete = Boolean(item && item.storagePath && storageRefFactory);
-  deleteBtn.classList.toggle("hidden", !canDelete);
-  deleteBtn.disabled = !canDelete || Boolean(isBusy);
-  deleteBtn.textContent = isBusy ? "Löschen..." : "Datei löschen";
+  deleteBtn.classList.toggle("hidden", !canModify);
+  deleteBtn.disabled = !canModify || Boolean(busyAction);
+  deleteBtn.textContent = isDeleteBusy ? "Löschen..." : "Datei löschen";
 }
 
 function openMediaLightbox(item) {
@@ -1409,7 +1494,7 @@ function openMediaLightbox(item) {
   }
 
   lightboxCaption.textContent = item.caption || item.alt || formatMonthLabel(activeGalleryMonth || "");
-  updateLightboxDeleteButton(item, false);
+  updateLightboxActionButtons(item);
   lightbox.classList.remove("hidden");
   document.body.style.overflow = "hidden";
 }
@@ -1425,8 +1510,67 @@ function closeMediaLightbox() {
   lightbox.classList.add("hidden");
   lightboxContent.innerHTML = "";
   activeLightboxItem = null;
-  updateLightboxDeleteButton(null, false);
+  updateLightboxActionButtons(null);
   document.body.style.overflow = "";
+}
+
+async function renameActiveGalleryItem() {
+  if (!activeLightboxItem || !activeLightboxItem.storagePath || !storageRefFactory) {
+    return;
+  }
+
+  const currentLabel = activeLightboxItem.caption || activeLightboxItem.alt || activeLightboxItem.defaultCaption || "Erinnerung";
+  const userInput = window.prompt(
+    "Neuer Titel für dieses Bild oder Video. Leer lassen, um wieder den Originalnamen zu verwenden.",
+    currentLabel
+  );
+
+  if (userInput === null) {
+    return;
+  }
+
+  const trimmedValue = userInput.trim();
+  const defaultCaption = activeLightboxItem.defaultCaption || formatCaptionFromName(activeLightboxItem.originalName || "");
+  const nextCustomMetadata = Object.assign({}, activeLightboxItem.customMetadata || {});
+
+  if (!trimmedValue || trimmedValue === defaultCaption) {
+    delete nextCustomMetadata.displayName;
+  } else {
+    nextCustomMetadata.displayName = trimmedValue;
+  }
+
+  updateLightboxActionButtons(activeLightboxItem, "rename");
+
+  try {
+    const updatedMetadata = await storageRefFactory(activeLightboxItem.storagePath).updateMetadata({
+      customMetadata: nextCustomMetadata
+    });
+    const customDisplayName = updatedMetadata && updatedMetadata.customMetadata && typeof updatedMetadata.customMetadata.displayName === "string"
+      ? updatedMetadata.customMetadata.displayName.trim()
+      : "";
+    const nextLabel = customDisplayName || defaultCaption;
+    const lightboxCaption = document.getElementById("mediaLightboxCaption");
+
+    activeLightboxItem.caption = nextLabel;
+    activeLightboxItem.alt = nextLabel;
+    activeLightboxItem.defaultCaption = defaultCaption;
+    activeLightboxItem.customMetadata = updatedMetadata && updatedMetadata.customMetadata ? updatedMetadata.customMetadata : {};
+
+    if (lightboxCaption) {
+      lightboxCaption.textContent = nextLabel;
+    }
+
+    if (activeGalleryMonth) {
+      delete galleryItemsCache[activeGalleryMonth];
+      await renderGalleryItems(activeGalleryMonth);
+    }
+
+    updateLightboxActionButtons(activeLightboxItem);
+  } catch (error) {
+    console.error("Der Galeriename konnte nicht aktualisiert werden:", error);
+    updateLightboxActionButtons(activeLightboxItem);
+    window.alert("Der Name konnte nicht geändert werden. Bitte versuche es noch einmal.");
+  }
 }
 
 async function deleteActiveGalleryItem() {
@@ -1441,7 +1585,7 @@ async function deleteActiveGalleryItem() {
     return;
   }
 
-  updateLightboxDeleteButton(activeLightboxItem, true);
+  updateLightboxActionButtons(activeLightboxItem, "delete");
 
   try {
     await storageRefFactory(activeLightboxItem.storagePath).delete();
@@ -1456,7 +1600,7 @@ async function deleteActiveGalleryItem() {
     await initializeGalleryPage(activeGalleryMonth);
   } catch (error) {
     console.error("Galerie-Datei konnte nicht gelöscht werden:", error);
-    updateLightboxDeleteButton(activeLightboxItem, false);
+    updateLightboxActionButtons(activeLightboxItem);
     window.alert("Die Datei konnte nicht gelöscht werden. Bitte versuche es noch einmal.");
   }
 }
@@ -1774,4 +1918,5 @@ window.handleLogin = handleLogin;
 window.handleLogout = handleLogout;
 window.closePopup = closePopup;
 window.closeMediaLightbox = closeMediaLightbox;
+window.renameActiveGalleryItem = renameActiveGalleryItem;
 window.deleteActiveGalleryItem = deleteActiveGalleryItem;
