@@ -511,12 +511,16 @@ function showActivityPopup(unseenActivities) {
   const stack = ensureActivityPopupStack();
   const isSingleActivity = unseenActivities.length === 1;
   const popup = activeActivityPopup || document.createElement("article");
+  const shouldKeepVisible = popup.classList.contains("visible");
 
   if (isSingleActivity) {
     activityPopupExpanded = false;
   }
 
   popup.className = "activity-popup";
+  if (shouldKeepVisible) {
+    popup.classList.add("visible");
+  }
   popup.dataset.grouped = isSingleActivity ? "false" : "true";
   popup.classList.toggle("activity-popup-expanded", !isSingleActivity && activityPopupExpanded);
   popup.replaceChildren();
