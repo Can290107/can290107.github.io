@@ -9,7 +9,7 @@
     { id: "2025-11", label: "November 2025" },
     { id: "2026-01", label: "Januar 2026" },
     { id: "2026-02", label: "Februar 2026" },
-    { id: "2026-03", label: "Maerz 2026" }
+    { id: "2026-03", label: "März 2026" }
   ],
   items: {
     "2025-04": [

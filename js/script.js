@@ -15,7 +15,7 @@ const ANNIVERSARY_SPECIAL_UNLOCK_DAY = "2026-06-21";
 const ANNIVERSARY_SPECIAL_STORAGE_KEY = "yearSpecial365AutoShown";
 const ANNIVERSARY_SPECIAL_TYPING_DELAY_MS = 28;
 const ANNIVERSARY_SPECIAL_SLIDE_INTERVAL_MS = 4200;
-const ANNIVERSARY_SPECIAL_STORY_TEXT = "365 Tage. Ein ganzes Jahr voller erster Male, leiser Sekunden und Erinnerungen, die nur uns gehoeren. Das hier ist unser kleines Kino fuer unser erstes gemeinsames Jahr.";
+const ANNIVERSARY_SPECIAL_STORY_TEXT = "365 Tage. Ein ganzes Jahr voller erster Male und Erinnerungen, die nur uns gehören. Das hier ist unser kleines Kino für unser erstes gemeinsames Jahr.";
 
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"];
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".m4v"];
@@ -37,8 +37,8 @@ let galleryMonths = [];
 let galleryItemsCache = {};
 let gallerySource = "storage";
 let gallerySortMode = "newest";
-let galleryEmptyStateTitle = "Noch keine Erinnerungen fuer diesen Monat";
-let galleryEmptyStateMessage = "Lade den Monatsordner in Firebase Storage hoch oder nutze fuer lokal gespeicherte Dateien das bestehende Galerie-Manifest als Fallback.";
+let galleryEmptyStateTitle = "Noch keine Erinnerungen für diesen Monat";
+let galleryEmptyStateMessage = "Lade den Monatsordner in Firebase Storage hoch oder nutze für lokal gespeicherte Dateien das bestehende Galerie-Manifest als Fallback.";
 let activityFeedLoaded = false;
 let activityReceiptsLoaded = false;
 let activityFeedItems = [];
@@ -723,7 +723,7 @@ function getFriendlyAuthErrorMessage(error, loginValue) {
   const errorCode = error && error.code ? error.code : "unknown";
 
   if (errorCode === "auth/user-not-found") {
-    return `Fuer ${loginValue} gibt es noch kein Firebase-Konto.`;
+    return `Für ${loginValue} gibt es noch kein Firebase-Konto.`;
   }
 
   if (
@@ -736,14 +736,14 @@ function getFriendlyAuthErrorMessage(error, loginValue) {
   }
 
   if (errorCode === "auth/too-many-requests") {
-    return "Zu viele Login-Versuche. Bitte versuche es spaeter noch einmal.";
+    return "Zu viele Login-Versuche. Bitte versuche es später noch einmal.";
   }
 
   if (errorCode === "auth/network-request-failed") {
-    return "Netzwerkfehler beim Login. Bitte pruefe deine Verbindung.";
+    return "Netzwerkfehler beim Login. Bitte prüfe deine Verbindung.";
   }
 
-  return "Login fehlgeschlagen. Bitte pruefe die Firebase-Auth-Einstellungen.";
+  return "Login fehlgeschlagen. Bitte prüfe die Firebase-Auth-Einstellungen.";
 }
 
 function showLoginError(message) {
@@ -901,7 +901,7 @@ async function handleLogin() {
   const email = resolveAuthEmail(loginValue);
 
   if (!email) {
-    showLoginError("Der Benutzername ist nicht fuer Firebase Auth freigeschaltet.");
+    showLoginError("Der Benutzername ist nicht für Firebase Auth freigeschaltet.");
     return;
   }
 
@@ -1299,7 +1299,7 @@ function renderAnniversarySpecialLoading() {
   const counter = document.getElementById("anniversarySpecialSlideCounter");
 
   if (mediaContainer) {
-    mediaContainer.innerHTML = '<div class="anniversary-special-loader">Jahresrueckblick wird geladen...</div>';
+    mediaContainer.innerHTML = '<div class="anniversary-special-loader">Jahresrückblick wird geladen...</div>';
   }
 
   if (caption) {
@@ -1318,7 +1318,7 @@ function renderAnniversarySpecialEmptyState() {
   const dots = document.getElementById("anniversarySpecialDots");
 
   if (mediaContainer) {
-    mediaContainer.innerHTML = '<div class="anniversary-special-loader">Der Rueckblick ist gerade nicht verfuegbar.</div>';
+    mediaContainer.innerHTML = '<div class="anniversary-special-loader">Der Rückblick ist gerade nicht verfügbar.</div>';
   }
 
   if (caption) {
@@ -1387,7 +1387,7 @@ function renderAnniversarySpecialDots() {
     const dot = document.createElement("button");
     dot.type = "button";
     dot.className = "anniversary-special-dot";
-    dot.setAttribute("aria-label", `Slide ${index + 1}: ${slide.caption || "Rueckblick"}`);
+    dot.setAttribute("aria-label", `Slide ${index + 1}: ${slide.caption || "Rückblick"}`);
     dot.classList.toggle("active", index === anniversarySpecialCurrentSlideIndex);
     dot.addEventListener("click", function() {
       stopAnniversarySpecialAutoplay();
@@ -1623,18 +1623,18 @@ function showLetter() {
 
   const text = `Hallo Cansu,
 
-ich habe lange darueber nachgedacht, was ich dir schreiben soll.
-Und je mehr ich darueber nachgedacht habe,
+ich habe lange darüber nachgedacht, was ich dir schreiben soll.
+Und je mehr ich darüber nachgedacht habe,
 desto mehr habe ich gemerkt,
-dass es eigentlich keine richtigen Worte dafuer gibt.
+dass es eigentlich keine richtigen Worte dafür gibt.
 
-Weil das, was ich fuer dich empfinde,
-laesst sich nicht einfach erklaeren.
-Es ist nicht nur ein Gefuehl.
+Weil das, was ich für dich empfinde,
+lässt sich nicht einfach erklären.
+Es ist nicht nur ein Gefühl.
 Es ist etwas, das einfach da ist
 die ganze Zeit.
 
-Du bist fuer mich nicht nur meine Freundin.
+Du bist für mich nicht nur meine Freundin.
 Du bist die Person,
 bei der alles irgendwie still wird.
 
@@ -1644,48 +1644,48 @@ wenn ich an dich denke,
 wird alles ruhiger.
 
 Und ich glaube, genau das ist das,
-was dich fuer mich so besonders macht.
+was dich für mich so besonders macht.
 
 Du bist nicht laut,
 nicht aufdringlich,
 nicht kompliziert.
 
 Und trotzdem schaffst du es,
-mehr in mir ausgeloest zu haben als alles andere.
+mehr in mir ausgelöst zu haben als alles andere.
 
-Ich fuehle mich bei dir einfach richtig.
+Ich fühle mich bei dir einfach richtig.
 
-So, als muesste ich nichts erklaeren.
-So, als wuerde alles genau so passen, wie es ist.
+So, als müsste ich nichts erklären.
+So, als würde alles genau so passen, wie es ist.
 
-Und ich habe das Gefuehl,
+Und ich habe das Gefühl,
 dass ich durch dich Dinge gelernt habe,
 die ich vorher nie wirklich verstanden habe.
 
 Wie es ist, jemandem wirklich zu vertrauen.
-Wie es ist, sich wirklich wohlzufuehlen.
+Wie es ist, sich wirklich wohlzufühlen.
 Und wie es ist,
-einen Menschen nicht mehr aus seinem Leben wegdenken zu koennen.
+einen Menschen nicht mehr aus seinem Leben wegdenken zu können.
 
-Du bist fuer mich zu einem festen Teil geworden.
+Du bist für mich zu einem festen Teil geworden.
 Nicht irgendwann,
 sondern einfach so.
 
 Und genau das macht mir manchmal bewusst,
 wie besonders das alles ist.
 
-Weil nichts davon selbstverstaendlich ist.
+Weil nichts davon selbstverständlich ist.
 
 Ich bin einfach dankbar.
-Fuer dich.
-Fuer alles, was du bist.
-Fuer die Art, wie du denkst,
-wie du fuehlst
+Für dich.
+Für alles, was du bist.
+Für die Art, wie du denkst,
+wie du fühlst
 und wie du mit mir umgehst.
 
 Und ich merke,
-dass ich mir genau das immer gewuenscht habe,
-ohne es richtig benennen zu koennen.
+dass ich mir genau das immer gewünscht habe,
+ohne es richtig benennen zu können.
 
 Ich kann dir nicht versprechen,
 dass immer alles perfekt sein wird.
@@ -1694,7 +1694,7 @@ Aber ich kann dir sagen,
 dass ich dich immer genauso ehrlich meinen werde,
 wie ich es jetzt tue.
 
-Und dass ich dich niemals als selbstverstaendlich sehen werde.
+Und dass ich dich niemals als selbstverständlich sehen werde.
 
 Alles Gute zum Geburtstag ❤️
 
@@ -2533,10 +2533,10 @@ async function initializeGalleryPage(preferredMonthId) {
   galleryItemsCache = {};
   gallerySource = "storage";
   setGalleryEmptyStateContent(
-    "Noch keine Erinnerungen fuer diesen Monat",
+    "Noch keine Erinnerungen für diesen Monat",
     canUseManifest
-      ? "Lade den Monatsordner in Firebase Storage hoch oder nutze fuer lokal gespeicherte Dateien das bestehende Galerie-Manifest als Fallback."
-      : "Online werden nur Dateien aus Firebase Storage angezeigt. Lokale assets/gallery-Dateien sind im Hosting absichtlich nicht verfuegbar."
+      ? "Lade den Monatsordner in Firebase Storage hoch oder nutze für lokal gespeicherte Dateien das bestehende Galerie-Manifest als Fallback."
+      : "Online werden nur Dateien aus Firebase Storage angezeigt. Lokale assets/gallery-Dateien sind im Hosting absichtlich nicht verfügbar."
   );
 
   showGalleryLoading("Monate werden geladen...");
@@ -2557,7 +2557,7 @@ async function initializeGalleryPage(preferredMonthId) {
       if (!galleryMonths.length && !canUseManifest) {
         setGalleryEmptyStateContent(
           "Online-Galerie noch leer",
-          "Es wurden noch keine Bilder oder Videos nach Firebase Storage hochgeladen. Oeffne die Upload-Seite und lade die Monatsordner dort hoch."
+          "Es wurden noch keine Bilder oder Videos nach Firebase Storage hochgeladen. Öffne die Upload-Seite und lade die Monatsordner dort hoch."
         );
       }
     }
@@ -2569,7 +2569,7 @@ async function initializeGalleryPage(preferredMonthId) {
     if (!canUseManifest) {
       setGalleryEmptyStateContent(
         "Firebase Storage konnte nicht geladen werden",
-        "Die Online-Galerie konnte nicht aus Firebase Storage gelesen werden. Bitte pruefe Login, Storage Rules und ob der Bucket korrekt eingerichtet ist."
+        "Die Online-Galerie konnte nicht aus Firebase Storage gelesen werden. Bitte prüfe Login, Storage Rules und ob der Bucket korrekt eingerichtet ist."
       );
     }
   }
@@ -2652,7 +2652,7 @@ async function renderGalleryItems(monthId) {
     } else if (!canUseHostedGalleryManifest()) {
       setGalleryEmptyStateContent(
         "Dateien konnten nicht geladen werden",
-        "Die Medien dieses Monats konnten nicht aus Firebase Storage geladen werden. Bitte pruefe, ob die Dateien dort hochgeladen wurden und ob dein Konto Zugriff hat."
+        "Die Medien dieses Monats konnten nicht aus Firebase Storage geladen werden. Bitte prüfe, ob die Dateien dort hochgeladen wurden und ob dein Konto Zugriff hat."
       );
     }
   }
@@ -2740,7 +2740,7 @@ function updateGallerySummary(monthId, itemCount) {
   }
 
   if (!monthId) {
-    summary.textContent = "Noch keine Monate verfuegbar.";
+    summary.textContent = "Noch keine Monate verfügbar.";
     return;
   }
 
@@ -3108,11 +3108,11 @@ function bindUploadSelectionInput(input, monthSelect) {
     clearInactiveUploadInputs(input);
 
     if (!totalFiles) {
-      updateUploadStatus("Keine unterstuetzten Fotos oder Videos ausgewaehlt.", true);
+      updateUploadStatus("Keine unterstützten Fotos oder Videos ausgewählt.", true);
       return;
     }
 
-    updateUploadStatus(`${totalFiles} Dateien aus der ${getUploadSourceLabel(input)} bereit fuer ${formatMonthLabel(monthSelect.value)}.`);
+    updateUploadStatus(`${totalFiles} Dateien aus der ${getUploadSourceLabel(input)} bereit für ${formatMonthLabel(monthSelect.value)}.`);
   });
 }
 
@@ -3235,7 +3235,7 @@ function getFriendlyStorageErrorMessage(error) {
   const errorCode = error && error.code ? error.code : "unknown";
 
   if (errorCode === "storage/unauthorized") {
-    return "Keine Berechtigung fuer Firebase Storage. Bitte pruefe Auth und Storage Rules.";
+    return "Keine Berechtigung für Firebase Storage. Bitte prüfe Auth und Storage Rules.";
   }
 
   if (errorCode === "storage/canceled") {
@@ -3289,7 +3289,7 @@ async function handleGalleryUpload() {
 
   setUploadBusy(true);
   setUploadProgress(0);
-  updateUploadStatus(`Upload fuer ${formatMonthLabel(monthId)} wird vorbereitet...`);
+  updateUploadStatus(`Upload für ${formatMonthLabel(monthId)} wird vorbereitet...`);
 
   try {
     let firstUploadedPath = "";
@@ -3326,7 +3326,7 @@ async function handleGalleryUpload() {
       storagePath: firstUploadedPath
     });
 
-    updateUploadStatus(`Upload abgeschlossen: ${mediaFiles.length} Dateien fuer ${formatMonthLabel(monthId)}.`);
+    updateUploadStatus(`Upload abgeschlossen: ${mediaFiles.length} Dateien für ${formatMonthLabel(monthId)}.`);
     resetUploadProgress();
   } catch (error) {
     console.error("Firebase Upload fehlgeschlagen:", error);
