@@ -10,6 +10,12 @@ const GALLERY_STORAGE_ROOT = window.galleryStorageRoot || "gallery";
 const GALLERY_START_YEAR = 2025;
 const GALLERY_START_MONTH = 4;
 const GALLERY_UPLOAD_MONTH_BUFFER = 12;
+const ANNIVERSARY_SPECIAL_AUTO_DAY = "2026-06-21";
+const ANNIVERSARY_SPECIAL_UNLOCK_DAY = "2026-06-21";
+const ANNIVERSARY_SPECIAL_STORAGE_KEY = "yearSpecial365AutoShown";
+const ANNIVERSARY_SPECIAL_TYPING_DELAY_MS = 28;
+const ANNIVERSARY_SPECIAL_SLIDE_INTERVAL_MS = 4200;
+const ANNIVERSARY_SPECIAL_STORY_TEXT = "365 Tage. Ein ganzes Jahr voller erster Male, leiser Sekunden und Erinnerungen, die nur uns gehoeren. Das hier ist unser kleines Kino fuer unser erstes gemeinsames Jahr.";
 
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"];
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".m4v"];
@@ -45,6 +51,12 @@ let pendingGalleryTargetMonthId = "";
 const seenActivityIds = new Set();
 let activeActivityPopup = null;
 let activityPopupExpanded = false;
+let anniversarySpecialSlides = [];
+let anniversarySpecialCurrentSlideIndex = 0;
+let anniversarySpecialAutoPlayTimer = null;
+let anniversarySpecialAutoOpenTimer = null;
+let anniversarySpecialTextTimer = null;
+let anniversarySpecialLoadingPromise = null;
 
 document.addEventListener("DOMContentLoaded", function() {
   initializePendingNavigationTargets();
@@ -767,6 +779,11 @@ function showMainContent() {
   }
 
   updateRelationshipCounter();
+
+  if (getCurrentPageName() === "index.html") {
+    syncAnniversarySpecialAvailability();
+    maybeAutoOpenAnniversarySpecial();
+  }
 }
 
 function showLoginScreen() {
@@ -1018,6 +1035,8 @@ function initializeUI() {
       });
     });
   });
+
+  initializeAnniversarySpecial();
 }
 
 function initializePageFeatures() {
@@ -1041,6 +1060,25 @@ function createLocalCalendarDate(year, month, day) {
   return new Date(year, month - 1, day);
 }
 
+function parseLocalDayKey(dayKey) {
+  const parts = String(dayKey || "").split("-");
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  const day = Number(parts[2]);
+
+  if ([year, month, day].some(function(value) {
+    return Number.isNaN(value);
+  })) {
+    return null;
+  }
+
+  return createLocalCalendarDate(year, month, day);
+}
+
 function getLocalCalendarDayTimestamp(date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }
@@ -1053,20 +1091,509 @@ function getFullLocalDayDifference(startDate, endDate) {
   return Math.floor((normalizedEnd - normalizedStart) / millisecondsPerDay);
 }
 
-function updateRelationshipCounter() {
+function isOnOrAfterLocalDayKey(currentDayKey, comparisonDayKey) {
+  const currentDate = parseLocalDayKey(currentDayKey);
+  const comparisonDate = parseLocalDayKey(comparisonDayKey);
+
+  if (!currentDate || !comparisonDate) {
+    return false;
+  }
+
+  return getLocalCalendarDayTimestamp(currentDate) >= getLocalCalendarDayTimestamp(comparisonDate);
+}
+
+function getRelationshipCounterValues(referenceDate) {
   const startDate = createLocalCalendarDate(2025, 4, 14);
   const relationshipDate = createLocalCalendarDate(2025, 6, 21);
-  const today = new Date();
+  const today = referenceDate || new Date();
 
-  const diffStart = getFullLocalDayDifference(startDate, today);
-  const diffRelationship = getFullLocalDayDifference(relationshipDate, today);
+  return {
+    daysKnown: getFullLocalDayDifference(startDate, today),
+    daysTogether: getFullLocalDayDifference(relationshipDate, today)
+  };
+}
+
+function updateRelationshipCounter() {
+  const counterValues = getRelationshipCounterValues(new Date());
 
   const togetherEl = document.getElementById("daysTogether");
   const relationshipEl = document.getElementById("daysRelationship");
 
   if (togetherEl && relationshipEl) {
-    togetherEl.textContent = diffStart + " Tage kennen";
-    relationshipEl.textContent = diffRelationship + " Tage zusammen ❤️";
+    togetherEl.textContent = counterValues.daysKnown + " Tage kennen";
+    relationshipEl.textContent = counterValues.daysTogether + " Tage zusammen ❤️";
+  }
+}
+
+function getAnniversarySpecialConfiguredHighlights() {
+  if (!window.anniversaryRecap || !Array.isArray(window.anniversaryRecap.highlights)) {
+    return [];
+  }
+
+  return window.anniversaryRecap.highlights;
+}
+
+function isAnniversarySpecialUnlocked() {
+  return isOnOrAfterLocalDayKey(getCurrentDayKey(), ANNIVERSARY_SPECIAL_UNLOCK_DAY);
+}
+
+function shouldAutoOpenAnniversarySpecial() {
+  const currentDayKey = getCurrentDayKey();
+  return currentDayKey === ANNIVERSARY_SPECIAL_AUTO_DAY
+    && localStorage.getItem(ANNIVERSARY_SPECIAL_STORAGE_KEY) !== currentDayKey;
+}
+
+function markAnniversarySpecialAutoShown() {
+  localStorage.setItem(ANNIVERSARY_SPECIAL_STORAGE_KEY, getCurrentDayKey());
+}
+
+function syncAnniversarySpecialAvailability() {
+  const entry = document.getElementById("anniversarySpecialEntry");
+  if (!entry) {
+    return;
+  }
+
+  entry.classList.toggle("hidden", !isAnniversarySpecialUnlocked());
+  updateAnniversarySpecialStats();
+}
+
+function updateAnniversarySpecialStats() {
+  const counterValues = getRelationshipCounterValues(new Date());
+  const milestoneValue = document.getElementById("anniversarySpecialMilestoneValue");
+  const currentValue = document.getElementById("anniversarySpecialCurrentValue");
+  const knownValue = document.getElementById("anniversarySpecialKnownValue");
+  const highlightsValue = document.getElementById("anniversarySpecialHighlightsValue");
+  const highlightCount = anniversarySpecialSlides.length || getAnniversarySpecialConfiguredHighlights().length;
+
+  if (milestoneValue) {
+    milestoneValue.textContent = "365";
+  }
+
+  if (currentValue) {
+    currentValue.textContent = String(counterValues.daysTogether);
+  }
+
+  if (knownValue) {
+    knownValue.textContent = String(counterValues.daysKnown);
+  }
+
+  if (highlightsValue) {
+    highlightsValue.textContent = String(highlightCount);
+  }
+}
+
+function initializeAnniversarySpecial() {
+  if (getCurrentPageName() !== "index.html") {
+    return;
+  }
+
+  const overlay = document.getElementById("anniversarySpecialOverlay");
+  const triggerButton = document.getElementById("anniversarySpecialBtn");
+  const closeButton = document.getElementById("anniversarySpecialCloseBtn");
+  const previousButton = document.getElementById("anniversarySpecialPrevBtn");
+  const nextButton = document.getElementById("anniversarySpecialNextBtn");
+  const autoplayButton = document.getElementById("anniversarySpecialAutoplayBtn");
+
+  if (triggerButton && triggerButton.dataset.bound !== "true") {
+    triggerButton.dataset.bound = "true";
+    triggerButton.addEventListener("click", function() {
+      void openAnniversarySpecial();
+    });
+  }
+
+  if (closeButton && closeButton.dataset.bound !== "true") {
+    closeButton.dataset.bound = "true";
+    closeButton.addEventListener("click", closeAnniversarySpecial);
+  }
+
+  if (previousButton && previousButton.dataset.bound !== "true") {
+    previousButton.dataset.bound = "true";
+    previousButton.addEventListener("click", function() {
+      stopAnniversarySpecialAutoplay();
+      showAnniversarySpecialSlide(anniversarySpecialCurrentSlideIndex - 1);
+    });
+  }
+
+  if (nextButton && nextButton.dataset.bound !== "true") {
+    nextButton.dataset.bound = "true";
+    nextButton.addEventListener("click", function() {
+      stopAnniversarySpecialAutoplay();
+      showAnniversarySpecialSlide(anniversarySpecialCurrentSlideIndex + 1);
+    });
+  }
+
+  if (autoplayButton && autoplayButton.dataset.bound !== "true") {
+    autoplayButton.dataset.bound = "true";
+    autoplayButton.addEventListener("click", toggleAnniversarySpecialAutoplay);
+  }
+
+  if (overlay && overlay.dataset.bound !== "true") {
+    overlay.dataset.bound = "true";
+    overlay.addEventListener("click", function(event) {
+      if (event.target === overlay) {
+        closeAnniversarySpecial();
+      }
+    });
+  }
+
+  if (document.body.dataset.anniversarySpecialKeydownBound !== "true") {
+    document.body.dataset.anniversarySpecialKeydownBound = "true";
+    document.addEventListener("keydown", function(event) {
+      const anniversaryOverlay = document.getElementById("anniversarySpecialOverlay");
+      if (!anniversaryOverlay || anniversaryOverlay.classList.contains("hidden")) {
+        return;
+      }
+
+      if (event.key === "Escape") {
+        closeAnniversarySpecial();
+        return;
+      }
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        showAnniversarySpecialSlide(anniversarySpecialCurrentSlideIndex + 1);
+      }
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        showAnniversarySpecialSlide(anniversarySpecialCurrentSlideIndex - 1);
+      }
+    });
+  }
+
+  syncAnniversarySpecialAvailability();
+}
+
+function maybeAutoOpenAnniversarySpecial() {
+  if (!shouldAutoOpenAnniversarySpecial() || anniversarySpecialAutoOpenTimer) {
+    return;
+  }
+
+  anniversarySpecialAutoOpenTimer = setTimeout(function() {
+    anniversarySpecialAutoOpenTimer = null;
+    if (shouldAutoOpenAnniversarySpecial()) {
+      void openAnniversarySpecial();
+    }
+  }, 1100);
+}
+
+async function resolveAnniversarySpecialSource(item) {
+  if (!item) {
+    return "";
+  }
+
+  if (canUseHostedGalleryManifest() && item.fallbackSrc) {
+    return item.fallbackSrc;
+  }
+
+  if (item.storagePath && storageRefFactory) {
+    return storageRefFactory(item.storagePath).getDownloadURL();
+  }
+
+  return item.fallbackSrc || item.src || "";
+}
+
+function renderAnniversarySpecialLoading() {
+  const mediaContainer = document.getElementById("anniversarySpecialSlideMedia");
+  const caption = document.getElementById("anniversarySpecialSlideCaption");
+  const counter = document.getElementById("anniversarySpecialSlideCounter");
+
+  if (mediaContainer) {
+    mediaContainer.innerHTML = '<div class="anniversary-special-loader">Jahresrueckblick wird geladen...</div>';
+  }
+
+  if (caption) {
+    caption.textContent = "";
+  }
+
+  if (counter) {
+    counter.textContent = "...";
+  }
+}
+
+function renderAnniversarySpecialEmptyState() {
+  const mediaContainer = document.getElementById("anniversarySpecialSlideMedia");
+  const caption = document.getElementById("anniversarySpecialSlideCaption");
+  const counter = document.getElementById("anniversarySpecialSlideCounter");
+  const dots = document.getElementById("anniversarySpecialDots");
+
+  if (mediaContainer) {
+    mediaContainer.innerHTML = '<div class="anniversary-special-loader">Der Rueckblick ist gerade nicht verfuegbar.</div>';
+  }
+
+  if (caption) {
+    caption.textContent = "Versuche es in einem Moment noch einmal.";
+  }
+
+  if (counter) {
+    counter.textContent = "0 / 0";
+  }
+
+  if (dots) {
+    dots.innerHTML = "";
+  }
+
+  updateAnniversarySpecialAutoplayButton();
+}
+
+function startAnniversarySpecialStoryTyping() {
+  const storyElement = document.getElementById("anniversarySpecialStory");
+  if (!storyElement) {
+    return;
+  }
+
+  if (anniversarySpecialTextTimer) {
+    clearTimeout(anniversarySpecialTextTimer);
+    anniversarySpecialTextTimer = null;
+  }
+
+  storyElement.textContent = "";
+
+  let currentIndex = 0;
+  function typeStory() {
+    if (currentIndex >= ANNIVERSARY_SPECIAL_STORY_TEXT.length) {
+      anniversarySpecialTextTimer = null;
+      return;
+    }
+
+    storyElement.textContent += ANNIVERSARY_SPECIAL_STORY_TEXT.charAt(currentIndex);
+    currentIndex += 1;
+    anniversarySpecialTextTimer = setTimeout(typeStory, ANNIVERSARY_SPECIAL_TYPING_DELAY_MS);
+  }
+
+  typeStory();
+}
+
+function updateAnniversarySpecialAutoplayButton() {
+  const autoplayButton = document.getElementById("anniversarySpecialAutoplayBtn");
+  if (!autoplayButton) {
+    return;
+  }
+
+  const canAutoplay = anniversarySpecialSlides.length > 1;
+  autoplayButton.disabled = !canAutoplay;
+  autoplayButton.textContent = anniversarySpecialAutoPlayTimer ? "Pause Diashow" : "Diashow starten";
+}
+
+function renderAnniversarySpecialDots() {
+  const dots = document.getElementById("anniversarySpecialDots");
+  if (!dots) {
+    return;
+  }
+
+  dots.innerHTML = "";
+
+  anniversarySpecialSlides.forEach(function(slide, index) {
+    const dot = document.createElement("button");
+    dot.type = "button";
+    dot.className = "anniversary-special-dot";
+    dot.setAttribute("aria-label", `Slide ${index + 1}: ${slide.caption || "Rueckblick"}`);
+    dot.classList.toggle("active", index === anniversarySpecialCurrentSlideIndex);
+    dot.addEventListener("click", function() {
+      stopAnniversarySpecialAutoplay();
+      showAnniversarySpecialSlide(index);
+    });
+    dots.appendChild(dot);
+  });
+}
+
+function updateAnniversarySpecialDotState() {
+  const dots = document.querySelectorAll(".anniversary-special-dot");
+  dots.forEach(function(dot, index) {
+    dot.classList.toggle("active", index === anniversarySpecialCurrentSlideIndex);
+  });
+}
+
+function showAnniversarySpecialSlide(index) {
+  if (!anniversarySpecialSlides.length) {
+    renderAnniversarySpecialEmptyState();
+    return;
+  }
+
+  anniversarySpecialCurrentSlideIndex = (index + anniversarySpecialSlides.length) % anniversarySpecialSlides.length;
+
+  const slide = anniversarySpecialSlides[anniversarySpecialCurrentSlideIndex];
+  const mediaContainer = document.getElementById("anniversarySpecialSlideMedia");
+  const caption = document.getElementById("anniversarySpecialSlideCaption");
+  const counter = document.getElementById("anniversarySpecialSlideCounter");
+
+  if (!mediaContainer || !caption || !counter) {
+    return;
+  }
+
+  mediaContainer.innerHTML = "";
+
+  if (slide.type === "video") {
+    const video = document.createElement("video");
+    video.src = slide.src;
+    video.controls = true;
+    video.preload = "metadata";
+    video.playsInline = true;
+    mediaContainer.appendChild(video);
+  } else {
+    const image = document.createElement("img");
+    image.src = slide.src;
+    image.alt = slide.caption || "Jubilaeumsbild";
+    image.loading = "eager";
+    mediaContainer.appendChild(image);
+  }
+
+  caption.textContent = slide.caption || "";
+  counter.textContent = `${anniversarySpecialCurrentSlideIndex + 1} / ${anniversarySpecialSlides.length}`;
+  updateAnniversarySpecialDotState();
+  updateAnniversarySpecialAutoplayButton();
+}
+
+function startAnniversarySpecialAutoplay() {
+  if (anniversarySpecialAutoPlayTimer) {
+    clearInterval(anniversarySpecialAutoPlayTimer);
+  }
+
+  if (anniversarySpecialSlides.length <= 1) {
+    anniversarySpecialAutoPlayTimer = null;
+    updateAnniversarySpecialAutoplayButton();
+    return;
+  }
+
+  anniversarySpecialAutoPlayTimer = setInterval(function() {
+    showAnniversarySpecialSlide(anniversarySpecialCurrentSlideIndex + 1);
+  }, ANNIVERSARY_SPECIAL_SLIDE_INTERVAL_MS);
+
+  updateAnniversarySpecialAutoplayButton();
+}
+
+function stopAnniversarySpecialAutoplay() {
+  if (anniversarySpecialAutoPlayTimer) {
+    clearInterval(anniversarySpecialAutoPlayTimer);
+    anniversarySpecialAutoPlayTimer = null;
+  }
+
+  updateAnniversarySpecialAutoplayButton();
+}
+
+function toggleAnniversarySpecialAutoplay() {
+  if (anniversarySpecialAutoPlayTimer) {
+    stopAnniversarySpecialAutoplay();
+    return;
+  }
+
+  startAnniversarySpecialAutoplay();
+}
+
+function loadAnniversarySpecialSlides() {
+  if (anniversarySpecialSlides.length) {
+    return Promise.resolve(anniversarySpecialSlides);
+  }
+
+  if (anniversarySpecialLoadingPromise) {
+    return anniversarySpecialLoadingPromise;
+  }
+
+  const recapItems = getAnniversarySpecialConfiguredHighlights();
+
+  anniversarySpecialLoadingPromise = Promise.all(recapItems.map(async function(item) {
+    try {
+      const resolvedSource = await resolveAnniversarySpecialSource(item);
+      if (!resolvedSource) {
+        return null;
+      }
+
+      return Object.assign({}, item, {
+        src: resolvedSource
+      });
+    } catch (error) {
+      console.error("Jubilaeumsbild konnte nicht geladen werden:", error);
+      if (item.fallbackSrc && canUseHostedGalleryManifest()) {
+        return Object.assign({}, item, {
+          src: item.fallbackSrc
+        });
+      }
+
+      return null;
+    }
+  })).then(function(items) {
+    anniversarySpecialSlides = items.filter(Boolean);
+    anniversarySpecialLoadingPromise = null;
+    updateAnniversarySpecialStats();
+    return anniversarySpecialSlides;
+  }).catch(function(error) {
+    anniversarySpecialLoadingPromise = null;
+    console.error("Jubilaeumsrueckblick konnte nicht vorbereitet werden:", error);
+    return [];
+  });
+
+  return anniversarySpecialLoadingPromise;
+}
+
+async function openAnniversarySpecial() {
+  if (!isAnniversarySpecialUnlocked()) {
+    return;
+  }
+
+  const overlay = document.getElementById("anniversarySpecialOverlay");
+  if (!overlay) {
+    return;
+  }
+
+  if (anniversarySpecialAutoOpenTimer) {
+    clearTimeout(anniversarySpecialAutoOpenTimer);
+    anniversarySpecialAutoOpenTimer = null;
+  }
+
+  if (getCurrentDayKey() === ANNIVERSARY_SPECIAL_AUTO_DAY) {
+    markAnniversarySpecialAutoShown();
+  }
+
+  overlay.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+
+  updateAnniversarySpecialStats();
+  startAnniversarySpecialStoryTyping();
+  anniversarySpecialCurrentSlideIndex = 0;
+
+  if (typeof confetti === "function") {
+    confetti({
+      particleCount: 220,
+      spread: 180,
+      startVelocity: 32,
+      origin: { y: 0.62 }
+    });
+  }
+
+  if (anniversarySpecialSlides.length) {
+    renderAnniversarySpecialDots();
+    showAnniversarySpecialSlide(0);
+    startAnniversarySpecialAutoplay();
+    return;
+  }
+
+  renderAnniversarySpecialLoading();
+  const loadedSlides = await loadAnniversarySpecialSlides();
+
+  if (!loadedSlides.length) {
+    renderAnniversarySpecialEmptyState();
+    return;
+  }
+
+  anniversarySpecialCurrentSlideIndex = 0;
+  renderAnniversarySpecialDots();
+  showAnniversarySpecialSlide(0);
+  startAnniversarySpecialAutoplay();
+}
+
+function closeAnniversarySpecial() {
+  const overlay = document.getElementById("anniversarySpecialOverlay");
+  if (!overlay) {
+    return;
+  }
+
+  overlay.classList.add("hidden");
+  document.body.style.overflow = "";
+  stopAnniversarySpecialAutoplay();
+
+  if (anniversarySpecialTextTimer) {
+    clearTimeout(anniversarySpecialTextTimer);
+    anniversarySpecialTextTimer = null;
   }
 }
 

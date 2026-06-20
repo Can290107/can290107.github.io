@@ -738,6 +738,284 @@ font-size:18px;
 
 }
 
+.anniversary-special-entry{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+  margin-top:22px;
+}
+
+.anniversary-special-entry-label{
+  margin:0;
+  font-size:13px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:#f9a8d4;
+}
+
+.anniversary-special-trigger{
+  margin:0;
+  padding:16px 30px;
+  background:linear-gradient(135deg, #db2777 0%, #ec4899 55%, #fb7185 100%);
+  box-shadow:0 18px 40px rgba(236,72,153,0.28);
+}
+
+.anniversary-special-trigger:hover{
+  box-shadow:0 20px 46px rgba(236,72,153,0.4);
+}
+
+.anniversary-special-overlay{
+  position:fixed;
+  inset:0;
+  z-index:10003;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+  background:rgba(2,6,23,0.88);
+  backdrop-filter:blur(12px);
+}
+
+.anniversary-special-panel{
+  position:relative;
+  width:min(1080px, 100%);
+  max-height:100%;
+  overflow:auto;
+  padding:34px;
+  border-radius:28px;
+  background:
+    radial-gradient(circle at top, rgba(251,113,133,0.2), transparent 35%),
+    linear-gradient(180deg, rgba(15,23,42,0.98) 0%, rgba(15,23,42,0.96) 100%);
+  border:1px solid rgba(249,168,212,0.18);
+  box-shadow:0 28px 90px rgba(0,0,0,0.45);
+}
+
+.anniversary-special-close{
+  position:absolute;
+  top:16px;
+  right:16px;
+  width:44px;
+  height:44px;
+  margin:0;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  background:rgba(255,255,255,0.08);
+  box-shadow:none;
+}
+
+.anniversary-special-close:hover{
+  transform:none;
+  background:rgba(255,255,255,0.16);
+  box-shadow:none;
+}
+
+.anniversary-special-header{
+  max-width:760px;
+  margin:0 auto 28px;
+}
+
+.anniversary-special-kicker{
+  margin:0 0 10px;
+  font-size:13px;
+  letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:#f9a8d4;
+}
+
+.anniversary-special-header h2{
+  margin:0;
+  font-size:clamp(2.3rem, 6vw, 4.5rem);
+  line-height:1;
+}
+
+.anniversary-special-story{
+  min-height:82px;
+  margin:16px auto 0;
+  max-width:660px;
+  font-size:18px;
+  line-height:1.8;
+  color:rgba(255,255,255,0.86);
+}
+
+.anniversary-special-stats{
+  display:grid;
+  grid-template-columns:repeat(4, minmax(0, 1fr));
+  gap:14px;
+  margin:0 0 28px;
+}
+
+.anniversary-special-stat-card{
+  padding:18px 16px;
+  border-radius:20px;
+  background:rgba(255,255,255,0.05);
+  border:1px solid rgba(255,255,255,0.08);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.anniversary-special-stat-value{
+  display:block;
+  font-size:clamp(1.9rem, 5vw, 2.6rem);
+  font-weight:700;
+  color:#fda4af;
+}
+
+.anniversary-special-stat-label{
+  display:block;
+  margin-top:8px;
+  font-size:13px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.68);
+}
+
+.anniversary-special-recap{
+  text-align:left;
+}
+
+.anniversary-special-recap-copy{
+  text-align:center;
+  max-width:720px;
+  margin:0 auto 22px;
+}
+
+.anniversary-special-recap-kicker{
+  margin:0 0 8px;
+  font-size:12px;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:#f9a8d4;
+}
+
+.anniversary-special-recap-copy h3{
+  margin:0;
+  font-size:clamp(1.5rem, 4vw, 2.1rem);
+}
+
+.anniversary-special-recap-copy p:last-child{
+  margin:12px 0 0;
+  color:rgba(255,255,255,0.78);
+}
+
+.anniversary-special-stage{
+  position:relative;
+  border-radius:24px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,0.08);
+  background:linear-gradient(135deg, rgba(244,114,182,0.16), rgba(59,130,246,0.14));
+  box-shadow:0 24px 50px rgba(0,0,0,0.24);
+}
+
+.anniversary-special-slide-media{
+  min-height:460px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+}
+
+.anniversary-special-slide-media img,
+.anniversary-special-slide-media video{
+  width:100%;
+  max-height:68vh;
+  object-fit:contain;
+  border-radius:18px;
+  background:black;
+}
+
+.anniversary-special-stage-meta{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:14px 18px;
+  background:linear-gradient(180deg, transparent 0%, rgba(2,6,23,0.82) 90%);
+}
+
+.anniversary-special-slide-counter{
+  font-size:14px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:#f8fafc;
+}
+
+.anniversary-special-meta-btn{
+  margin:0;
+  padding:10px 16px;
+  font-size:14px;
+  background:rgba(255,255,255,0.12);
+  box-shadow:none;
+}
+
+.anniversary-special-meta-btn:hover,
+.anniversary-special-controls button:hover,
+.anniversary-special-dot:hover{
+  box-shadow:none;
+}
+
+.anniversary-special-caption{
+  margin:16px 0 0;
+  text-align:center;
+  color:#fbcfe8;
+  font-size:16px;
+  line-height:1.7;
+}
+
+.anniversary-special-controls{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  margin-top:20px;
+  flex-wrap:wrap;
+}
+
+.anniversary-special-controls button{
+  margin:0;
+  padding:12px 18px;
+  font-size:15px;
+}
+
+.anniversary-special-dots{
+  margin-top:18px;
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.anniversary-special-dot{
+  width:12px;
+  height:12px;
+  margin:0;
+  padding:0;
+  border-radius:999px;
+  background:rgba(255,255,255,0.18);
+  box-shadow:none;
+}
+
+.anniversary-special-dot.active{
+  background:#fb7185;
+  transform:scale(1.15);
+}
+
+.anniversary-special-loader{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:460px;
+  padding:20px;
+  font-size:17px;
+  line-height:1.7;
+  color:rgba(255,255,255,0.84);
+}
+
 /*------Login----*/
 
 .login-screen{
@@ -1738,6 +2016,31 @@ ul{
   .upload-panel {
     padding: 18px;
   }
+
+  .anniversary-special-panel {
+    padding: 26px 18px 22px;
+  }
+
+  .anniversary-special-story {
+    min-height: 0;
+    font-size: 16px;
+  }
+
+  .anniversary-special-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .anniversary-special-slide-media,
+  .anniversary-special-loader {
+    min-height: 320px;
+  }
+
+  .anniversary-special-stage-meta {
+    position: static;
+    flex-direction: column;
+    align-items: stretch;
+    background: rgba(2,6,23,0.78);
+  }
 }
 
 @media (max-width: 520px) {
@@ -1776,5 +2079,32 @@ ul{
 
   .gallery-grid {
     grid-template-columns: 1fr;
+  }
+
+  .anniversary-special-overlay {
+    padding: 12px;
+  }
+
+  .anniversary-special-panel {
+    border-radius: 22px;
+  }
+
+  .anniversary-special-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .anniversary-special-slide-media,
+  .anniversary-special-loader {
+    min-height: 240px;
+    padding: 12px;
+  }
+
+  .anniversary-special-controls {
+    flex-direction: column;
+  }
+
+  .anniversary-special-controls button,
+  .anniversary-special-meta-btn {
+    width: 100%;
   }
 }
