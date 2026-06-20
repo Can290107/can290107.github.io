@@ -15,7 +15,7 @@ const ANNIVERSARY_SPECIAL_UNLOCK_DAY = "2026-06-21";
 const ANNIVERSARY_SPECIAL_STORAGE_KEY = "yearSpecial365AutoShown";
 const ANNIVERSARY_SPECIAL_TYPING_DELAY_MS = 28;
 const ANNIVERSARY_SPECIAL_SLIDE_INTERVAL_MS = 4200;
-const ANNIVERSARY_SPECIAL_STORY_TEXT = "365 Tage. Ein ganzes Jahr voller erster Male und Erinnerungen, die nur uns gehören. Das hier ist unser kleines Kino für unser erstes gemeinsames Jahr.";
+const ANNIVERSARY_SPECIAL_STORY_TEXT = "365 Tage. Ein ganzes Jahr voller erster Male und Erinnerungen, die nur uns gehören. Das hier ist eine kleine Zusammenfassung für unser erstes gemeinsames Jahr.";
 
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"];
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".m4v"];
