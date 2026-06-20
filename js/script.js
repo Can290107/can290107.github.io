@@ -1037,13 +1037,29 @@ function initializePageFeatures() {
   }
 }
 
+function createLocalCalendarDate(year, month, day) {
+  return new Date(year, month - 1, day);
+}
+
+function getLocalCalendarDayTimestamp(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+function getFullLocalDayDifference(startDate, endDate) {
+  const millisecondsPerDay = 1000 * 60 * 60 * 24;
+  const normalizedStart = getLocalCalendarDayTimestamp(startDate);
+  const normalizedEnd = getLocalCalendarDayTimestamp(endDate);
+
+  return Math.floor((normalizedEnd - normalizedStart) / millisecondsPerDay);
+}
+
 function updateRelationshipCounter() {
-  const startDate = new Date("2025-04-14");
-  const relationshipDate = new Date("2025-06-21");
+  const startDate = createLocalCalendarDate(2025, 4, 14);
+  const relationshipDate = createLocalCalendarDate(2025, 6, 21);
   const today = new Date();
 
-  const diffStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
-  const diffRelationship = Math.floor((today - relationshipDate) / (1000 * 60 * 60 * 24));
+  const diffStart = getFullLocalDayDifference(startDate, today);
+  const diffRelationship = getFullLocalDayDifference(relationshipDate, today);
 
   const togetherEl = document.getElementById("daysTogether");
   const relationshipEl = document.getElementById("daysRelationship");
