@@ -1,6 +1,7 @@
 const PRIVATE_PAGES = ["tools.html", "gallery.html", "secret.html"];
 const AUTH_SESSION_DAY_KEY = "authSessionDay";
 const AUTH_USERNAME_KEY = "authUsername";
+const ANNIVERSARY_SPECIAL_SEEN_KEY = "anniversarySpecialSeenDay";
 const LEGACY_LOGIN_USER_KEY = "loggedInUser";
 const LEGACY_LOGIN_TIME_KEY = "loginTimestamp";
 const ACTIVITY_COLLECTION = "activity";
@@ -10,6 +11,8 @@ const GALLERY_STORAGE_ROOT = window.galleryStorageRoot || "gallery";
 const GALLERY_START_YEAR = 2025;
 const GALLERY_START_MONTH = 4;
 const GALLERY_UPLOAD_MONTH_BUFFER = 12;
+const ANNIVERSARY_MILESTONE_DAYS = 365;
+const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"];
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".m4v"];
@@ -45,6 +48,8 @@ let pendingGalleryTargetMonthId = "";
 const seenActivityIds = new Set();
 let activeActivityPopup = null;
 let activityPopupExpanded = false;
+let anniversarySpecialAutoOpenTimer = null;
+let anniversaryCounterTimer = null;
 
 document.addEventListener("DOMContentLoaded", function() {
   initializePendingNavigationTargets();
@@ -767,11 +772,14 @@ function showMainContent() {
   }
 
   updateRelationshipCounter();
+  updateAnniversarySpecialAvailability();
+  maybeLaunchAnniversarySpecial();
 }
 
 function showLoginScreen() {
   const loginScreen = document.getElementById("loginScreen");
   const mainContent = document.getElementById("mainContent");
+  const anniversaryTrigger = document.getElementById("anniversaryTrigger");
 
   if (loginScreen) {
     loginScreen.style.display = "flex";
@@ -780,6 +788,12 @@ function showLoginScreen() {
   if (mainContent) {
     mainContent.style.display = "none";
   }
+
+  if (anniversaryTrigger) {
+    anniversaryTrigger.hidden = true;
+  }
+
+  closeAnniversarySpecial();
 }
 
 function startAuthFlow() {
@@ -941,6 +955,9 @@ async function handleLogout() {
 }
 
 function initializeUI() {
+  bindAnniversarySpecial();
+  updateAnniversarySpecialContent(getRelationshipStats());
+
   const button = document.getElementById("startBtn");
   const music = document.getElementById("bgMusic");
 
@@ -1037,20 +1054,322 @@ function initializePageFeatures() {
   }
 }
 
-function updateRelationshipCounter() {
-  const startDate = new Date("2025-04-14");
-  const relationshipDate = new Date("2025-06-21");
+function getRelationshipStats() {
+  const startDate = new Date("2025-04-14T00:00:00");
+  const relationshipDate = new Date("2025-06-21T00:00:00");
   const today = new Date();
+  const normalizedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const knownDays = Math.max(0, Math.floor((normalizedToday - startDate) / DAY_IN_MS));
+  const relationshipDays = Math.max(0, Math.floor((normalizedToday - relationshipDate) / DAY_IN_MS));
 
-  const diffStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
-  const diffRelationship = Math.floor((today - relationshipDate) / (1000 * 60 * 60 * 24));
+  return {
+    knownDays: knownDays,
+    relationshipDays: relationshipDays,
+    relationshipWeeks: Math.max(0, Math.floor(relationshipDays / 7)),
+    currentDateLabel: normalizedToday.toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric"
+    })
+  };
+}
+
+function updateRelationshipCounter() {
+  const stats = getRelationshipStats();
 
   const togetherEl = document.getElementById("daysTogether");
   const relationshipEl = document.getElementById("daysRelationship");
 
   if (togetherEl && relationshipEl) {
-    togetherEl.textContent = diffStart + " Tage kennen";
-    relationshipEl.textContent = diffRelationship + " Tage zusammen ❤️";
+    togetherEl.textContent = stats.knownDays + " Tage kennen";
+    relationshipEl.textContent = stats.relationshipDays + " Tage zusammen ❤️";
+  }
+
+  updateAnniversarySpecialContent(stats);
+}
+
+function bindAnniversarySpecial() {
+  const trigger = document.getElementById("anniversaryTrigger");
+  const special = document.getElementById("anniversarySpecial");
+  const closeButton = document.getElementById("closeAnniversarySpecial");
+  const replayButton = document.getElementById("specialReplayBtn");
+  const letterButton = document.getElementById("specialLetterBtn");
+
+  if (trigger && trigger.dataset.bound !== "true") {
+    trigger.dataset.bound = "true";
+    trigger.addEventListener("click", openAnniversarySpecial);
+  }
+
+  if (closeButton && closeButton.dataset.bound !== "true") {
+    closeButton.dataset.bound = "true";
+    closeButton.addEventListener("click", closeAnniversarySpecial);
+  }
+
+  if (replayButton && replayButton.dataset.bound !== "true") {
+    replayButton.dataset.bound = "true";
+    replayButton.addEventListener("click", launchAnniversaryConfetti);
+  }
+
+  if (letterButton && letterButton.dataset.bound !== "true") {
+    letterButton.dataset.bound = "true";
+    letterButton.addEventListener("click", openLetterFromSpecial);
+  }
+
+  if (special && special.dataset.bound !== "true") {
+    special.dataset.bound = "true";
+    special.addEventListener("click", function(event) {
+      if (event.target === special || event.target.dataset.close === "true") {
+        closeAnniversarySpecial();
+      }
+    });
+  }
+
+  if (document.body.dataset.anniversarySpecialKeyBound !== "true") {
+    document.body.dataset.anniversarySpecialKeyBound = "true";
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "Escape") {
+        closeAnniversarySpecial();
+      }
+    });
+  }
+}
+
+function updateAnniversarySpecialAvailability() {
+  const trigger = document.getElementById("anniversaryTrigger");
+  const stats = getRelationshipStats();
+  const isEligible = stats.relationshipDays >= ANNIVERSARY_MILESTONE_DAYS;
+
+  updateAnniversarySpecialContent(stats);
+
+  if (!trigger) {
+    return;
+  }
+
+  trigger.hidden = !isEligible;
+  trigger.textContent = stats.relationshipDays === ANNIVERSARY_MILESTONE_DAYS
+    ? "365 Tage Special ✨"
+    : "Unser Special ✨";
+}
+
+function updateAnniversarySpecialContent(stats) {
+  const counter = document.getElementById("anniversaryCounter");
+  const subtitle = document.getElementById("anniversarySpecialSubtitle");
+  const message = document.getElementById("anniversarySpecialMessage");
+  const knownDays = document.getElementById("anniversaryKnownDays");
+  const relationshipDays = document.getElementById("anniversaryRelationshipDays");
+  const weeksTogether = document.getElementById("anniversaryWeeksTogether");
+  const currentDate = document.getElementById("anniversaryCurrentDate");
+
+  if (counter && !anniversaryCounterTimer) {
+    counter.textContent = String(stats.relationshipDays);
+  }
+
+  if (subtitle) {
+    subtitle.textContent = stats.relationshipDays === ANNIVERSARY_MILESTONE_DAYS
+      ? "Ein ganzes Jahr offiziell wir zwei. Das hier soll sich eher wie Kino als wie ein normaler Seitenstart anfuehlen."
+      : `Heute feiern wir ${stats.relationshipDays} Tage zusammen. Das 365-Tage-Kapitel laeuft weiter.`;
+  }
+
+  if (message) {
+    message.textContent = stats.relationshipDays === ANNIVERSARY_MILESTONE_DAYS
+      ? "Aus einer einzigen Nachricht, einem Parktreffen und ganz vielen echten Momenten ist ein ganzes Jahr voller Wir geworden."
+      : "365 Tage sind geknackt. Und jeder neue Tag macht dieses Special eigentlich nur groesser.";
+  }
+
+  if (knownDays) {
+    knownDays.textContent = String(stats.knownDays);
+  }
+
+  if (relationshipDays) {
+    relationshipDays.textContent = String(stats.relationshipDays);
+  }
+
+  if (weeksTogether) {
+    weeksTogether.textContent = String(stats.relationshipWeeks);
+  }
+
+  if (currentDate) {
+    currentDate.textContent = stats.currentDateLabel;
+  }
+}
+
+function isAnniversaryMilestoneDay(stats) {
+  return stats.relationshipDays >= ANNIVERSARY_MILESTONE_DAYS
+    && stats.relationshipDays % ANNIVERSARY_MILESTONE_DAYS === 0;
+}
+
+function maybeLaunchAnniversarySpecial() {
+  const special = document.getElementById("anniversarySpecial");
+  const stats = getRelationshipStats();
+
+  if (!special || getCurrentPageName() !== "index.html") {
+    return;
+  }
+
+  if (anniversarySpecialAutoOpenTimer) {
+    clearTimeout(anniversarySpecialAutoOpenTimer);
+    anniversarySpecialAutoOpenTimer = null;
+  }
+
+  if (!isAnniversaryMilestoneDay(stats)) {
+    return;
+  }
+
+  if (localStorage.getItem(ANNIVERSARY_SPECIAL_SEEN_KEY) === getCurrentDayKey()) {
+    return;
+  }
+
+  anniversarySpecialAutoOpenTimer = setTimeout(function() {
+    openAnniversarySpecial();
+  }, 900);
+}
+
+function openAnniversarySpecial() {
+  const special = document.getElementById("anniversarySpecial");
+  const closeButton = document.getElementById("closeAnniversarySpecial");
+
+  if (!special) {
+    return;
+  }
+
+  if (anniversarySpecialAutoOpenTimer) {
+    clearTimeout(anniversarySpecialAutoOpenTimer);
+    anniversarySpecialAutoOpenTimer = null;
+  }
+
+  updateAnniversarySpecialContent(getRelationshipStats());
+  localStorage.setItem(ANNIVERSARY_SPECIAL_SEEN_KEY, getCurrentDayKey());
+
+  special.hidden = false;
+  special.setAttribute("aria-hidden", "false");
+  document.body.classList.add("anniversary-special-open");
+
+  window.requestAnimationFrame(function() {
+    special.classList.add("visible");
+  });
+
+  startAnniversaryCounter();
+  launchAnniversaryConfetti();
+
+  if (closeButton) {
+    setTimeout(function() {
+      closeButton.focus();
+    }, 120);
+  }
+}
+
+function closeAnniversarySpecial() {
+  const special = document.getElementById("anniversarySpecial");
+
+  if (!special) {
+    return;
+  }
+
+  if (anniversarySpecialAutoOpenTimer) {
+    clearTimeout(anniversarySpecialAutoOpenTimer);
+    anniversarySpecialAutoOpenTimer = null;
+  }
+
+  stopAnniversaryCounter();
+  special.classList.remove("visible");
+  special.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("anniversary-special-open");
+
+  setTimeout(function() {
+    if (!special.classList.contains("visible")) {
+      special.hidden = true;
+    }
+  }, 260);
+}
+
+function startAnniversaryCounter() {
+  const counter = document.getElementById("anniversaryCounter");
+  const targetValue = getRelationshipStats().relationshipDays;
+  const startValue = Math.max(0, targetValue - 90);
+
+  if (!counter) {
+    return;
+  }
+
+  stopAnniversaryCounter();
+  counter.textContent = String(startValue);
+
+  if (targetValue <= startValue) {
+    counter.textContent = String(targetValue);
+    return;
+  }
+
+  let currentValue = startValue;
+  anniversaryCounterTimer = setInterval(function() {
+    currentValue += 1;
+    counter.textContent = String(currentValue);
+
+    if (currentValue >= targetValue) {
+      stopAnniversaryCounter();
+    }
+  }, 18);
+}
+
+function stopAnniversaryCounter() {
+  if (!anniversaryCounterTimer) {
+    return;
+  }
+
+  clearInterval(anniversaryCounterTimer);
+  anniversaryCounterTimer = null;
+}
+
+function launchAnniversaryConfetti() {
+  if (typeof confetti !== "function") {
+    return;
+  }
+
+  const colors = ["#ec4899", "#f472b6", "#fb7185", "#f9a8d4", "#ffffff"];
+
+  confetti({
+    particleCount: 220,
+    spread: 140,
+    startVelocity: 48,
+    origin: { x: 0.5, y: 0.62 },
+    colors: colors,
+    scalar: 1.05,
+    zIndex: 10060
+  });
+
+  setTimeout(function() {
+    confetti({
+      particleCount: 120,
+      spread: 90,
+      origin: { x: 0.2, y: 0.58 },
+      colors: colors,
+      zIndex: 10060
+    });
+  }, 150);
+
+  setTimeout(function() {
+    confetti({
+      particleCount: 120,
+      spread: 90,
+      origin: { x: 0.8, y: 0.58 },
+      colors: colors,
+      zIndex: 10060
+    });
+  }, 260);
+}
+
+function openLetterFromSpecial() {
+  const letter = document.getElementById("loveLetter");
+
+  closeAnniversarySpecial();
+  showLetter();
+
+  if (letter) {
+    setTimeout(function() {
+      letter.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+    }, 180);
   }
 }
 

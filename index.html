@@ -21,6 +21,7 @@
     <nav class="navbar">
   <h2>❤️</h2>
   <div class="navbar-actions">
+    <button id="anniversaryTrigger" class="special-trigger" type="button" hidden>365 Tage Special ✨</button>
     <button onclick="openGallery()">Momente</button>
     <button onclick="openTools()">Tools</button>
     <button class="logout-btn" onclick="handleLogout()">Abmelden</button>
@@ -61,6 +62,66 @@ autocomplete="off"
 <p id="daysTogether"></p>
 <p id="daysRelationship"></p>
 
+</div>
+
+<div id="anniversarySpecial" class="anniversary-special" aria-hidden="true" hidden>
+<div class="anniversary-special-backdrop" data-close="true"></div>
+<div class="anniversary-special-panel" role="dialog" aria-modal="true" aria-labelledby="anniversarySpecialHeadline">
+
+<button id="closeAnniversarySpecial" class="anniversary-special-close" type="button" aria-label="Special schliessen">×</button>
+
+<p class="anniversary-special-kicker">Unser 365-Tage-Special</p>
+<p class="anniversary-special-meta">21.06.2025 bis <span id="anniversaryCurrentDate"></span></p>
+
+<h2 id="anniversarySpecialHeadline" class="anniversary-special-headline">
+<span id="anniversaryCounter" class="anniversary-special-counter">365</span>
+<span class="anniversary-special-headline-copy">Tage offiziell wir</span>
+</h2>
+
+<p id="anniversarySpecialSubtitle" class="anniversary-special-subtitle"></p>
+
+<div class="anniversary-special-stats">
+<article class="anniversary-special-stat">
+<strong id="anniversaryKnownDays">0</strong>
+<span>Tage kennen</span>
+</article>
+
+<article class="anniversary-special-stat">
+<strong id="anniversaryRelationshipDays">0</strong>
+<span>Tage zusammen</span>
+</article>
+
+<article class="anniversary-special-stat">
+<strong id="anniversaryWeeksTogether">0</strong>
+<span>Wochen als Team</span>
+</article>
+</div>
+
+<div class="anniversary-special-moments">
+<article class="anniversary-special-moment">
+<span>14.04.2025</span>
+<p>Die erste Nachricht, aus der alles geworden ist.</p>
+</article>
+
+<article class="anniversary-special-moment">
+<span>19.04.2025</span>
+<p>Das erste Treffen, bei dem aus Aufregung etwas Echtes wurde.</p>
+</article>
+
+<article class="anniversary-special-moment">
+<span>21.06.2025</span>
+<p>Der Tag, an dem aus dir und mir ganz offiziell wir wurde.</p>
+</article>
+</div>
+
+<p id="anniversarySpecialMessage" class="anniversary-special-note"></p>
+
+<div class="anniversary-special-actions">
+<button id="specialReplayBtn" type="button">Nochmal eskalieren ✨</button>
+<button id="specialLetterBtn" class="anniversary-secondary-btn" type="button">Zum Brief ❤️</button>
+</div>
+
+</div>
 </div>
 
 <audio id="bgMusic">
