@@ -31,6 +31,12 @@ window.anniversaryRecap = {
       caption: "August 2025 · Du und ich, Nostalagie."
     },
     {
+      type: "image",
+      storagePath: "gallery/2025-09/51E27825-BF64-4C95-8E75-94D5B3ABD196.jpeg",
+      fallbackSrc: "https://firebasestorage.googleapis.com/v0/b/geburtstag-seite.firebasestorage.app/o/gallery%2F2025-09%2F51E27825-BF64-4C95-8E75-94D5B3ABD196.jpeg?alt=media&token=c017c38f-cd77-4535-9cec-c400baa99a93",
+      caption: "September 2025 · Düsseldorf unsicher gemacht."
+    },
+    {
       type: "video",
       storagePath: "gallery/2025-10/IMG_1036.MOV",
       fallbackSrc: "assets/gallery/2025-10/IMG_1036.MOV",
@@ -64,19 +70,19 @@ window.anniversaryRecap = {
       type: "image",
       storagePath: "gallery/2026-04/IMG_3716.png",
       fallbackSrc: "https://firebasestorage.googleapis.com/v0/b/geburtstag-seite.firebasestorage.app/o/gallery%2F2026-04%2FIMG_3716.png?alt=media&token=1ebf07d6-f42a-4f65-b2cc-396923da5305",
-      caption: "April 2026 · Und es wurde immer schöner."
+      caption: "April 2026 · Kleine Verletzung."
     },
     {
       type: "video",
       storagePath: "gallery/2026-05/IMG_2883.mov",
       fallbackSrc: "https://firebasestorage.googleapis.com/v0/b/geburtstag-seite.firebasestorage.app/o/gallery%2F2026-05%2FIMG_2883.mov?alt=media&token=d003e1d6-b9e2-4116-8781-07c88af994eb",
-      caption: "Mai 2026 · Noch mehr von uns in Bewegung."
+      caption: "Mai 2026 · Minigolf-Date Revanche."
     },
     {
       type: "image",
       storagePath: "gallery/2026-06/IMG_5173.jpeg",
       fallbackSrc: "https://firebasestorage.googleapis.com/v0/b/geburtstag-seite.firebasestorage.app/o/gallery%2F2026-06%2FIMG_5173.jpeg?alt=media&token=ec58ede9-be2d-414a-9613-c445082ff8e5",
-      caption: "Juni 2026 · Ein Jahr später, immer noch wir."
+      caption: "Juni 2026 · Übernachtungsparties sind die besten."
     }
   ]
 };
