@@ -1045,6 +1045,10 @@ function initializePageFeatures() {
   if (currentPage === "tools.html") {
     loadTodos();
     loadEvents();
+
+    if (typeof window.initializeDateRoulette === "function") {
+      window.initializeDateRoulette();
+    }
   }
 
   if (currentPage === "gallery.html") {
@@ -1902,7 +1906,7 @@ function loadTodos() {
 async function addTodo() {
   const input = document.getElementById("todoInput");
   if (!input || !input.value.trim()) {
-    return;
+    return false;
   }
 
   const todoText = input.value.trim();
@@ -1922,10 +1926,11 @@ async function addTodo() {
     });
   } catch (error) {
     console.error("Listenpunkt konnte nicht gespeichert werden:", error);
-    return;
+    return false;
   }
 
   input.value = "";
+  return true;
 }
 
 async function toggleTodo(id, currentState, todoText) {

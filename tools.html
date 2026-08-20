@@ -17,6 +17,8 @@
 
 <!-- Zentrale Firebase-Konfiguration -->
 <script src="js/firebase-config.js"></script>
+<script src="js/date-ideas.js"></script>
+<script src="js/date-roulette.js"></script>
 
 </head>
 
@@ -59,6 +61,37 @@
 
   <ul id="todoList" class="todo-list"></ul>
 </div>
+</section>
+
+<section class="roulette-section">
+  <h2>Date Roulette 🎡</h2>
+  <p class="roulette-intro">Wenn uns gar nichts einfällt, dreht das Roulette eine kleine Date-Idee für uns heraus.</p>
+
+  <div class="roulette-card">
+    <div class="roulette-stage" aria-live="polite">
+      <div id="dateRouletteWheel" class="roulette-wheel">
+        <div class="roulette-wheel-inner">
+          <span class="roulette-wheel-label">Heute passt vielleicht</span>
+          <strong id="dateRoulettePreview">Ein spontanes Überraschungsdate</strong>
+        </div>
+      </div>
+      <div class="roulette-pointer" aria-hidden="true"></div>
+    </div>
+
+    <button id="dateRouletteSpinButton" class="roulette-spin-button" type="button">Date drehen</button>
+
+    <div id="dateRouletteResult" class="roulette-result hidden" aria-live="polite">
+      <p class="roulette-result-kicker">Gezogen wurde:</p>
+      <h3 id="dateRouletteResultText"></h3>
+
+      <div class="roulette-result-actions">
+        <button id="dateRouletteTodoButton" type="button">Zur Liste hinzufügen</button>
+        <button id="dateRouletteAgainButton" class="roulette-secondary-button" type="button">Noch mal drehen</button>
+      </div>
+    </div>
+
+    <p class="roulette-note">Nur als kleines Extra: drehen, lachen, ausprobieren.</p>
+  </div>
 </section>
 
 <section>
