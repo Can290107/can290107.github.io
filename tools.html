@@ -91,12 +91,68 @@
   </div>
 </section>
 
+<section id="guessMemorySection" class="guess-memory-section">
+  <h2>Guess the Memory 🖼️</h2>
+  <p class="roulette-intro">Ein Foto taucht auf und du musst erraten, aus welchem Monat diese Erinnerung stammt.</p>
+
+  <div class="guess-memory-card">
+    <div class="guess-memory-toolbar">
+      <p id="guessMemoryProgress" class="guess-memory-pill">Noch nicht gestartet</p>
+      <p id="guessMemoryScore" class="guess-memory-pill">0 richtig</p>
+    </div>
+
+    <p id="guessMemoryStatus" class="guess-memory-status">Die Bilder werden erst geladen, wenn du das Spiel startest.</p>
+
+    <div id="guessMemoryStage" class="guess-memory-stage hidden">
+      <div class="guess-memory-media-frame">
+        <img id="guessMemoryImage" class="guess-memory-image" src="" alt="Erinnerung für Guess the Memory">
+      </div>
+
+      <p id="guessMemoryQuestion" class="guess-memory-question">Zu welchem Monat gehört dieses Foto?</p>
+      <div id="guessMemoryOptions" class="guess-memory-options" aria-live="polite"></div>
+    </div>
+
+    <div id="guessMemoryFeedback" class="guess-memory-feedback hidden" aria-live="polite">
+      <p id="guessMemoryFeedbackKicker" class="guess-memory-feedback-kicker"></p>
+      <h3 id="guessMemoryFeedbackTitle"></h3>
+      <p id="guessMemoryFeedbackText"></p>
+
+      <div class="guess-memory-actions">
+        <button id="guessMemoryViewButton" class="guess-memory-secondary-button hidden" type="button">Foto groß ansehen</button>
+        <button id="guessMemoryNextButton" type="button">Nächste Runde</button>
+      </div>
+    </div>
+
+    <div id="guessMemoryFinish" class="guess-memory-finish hidden" aria-live="polite">
+      <p class="guess-memory-feedback-kicker">Spiel beendet</p>
+      <h3 id="guessMemoryFinishTitle"></h3>
+      <p id="guessMemoryFinishText"></p>
+      <button id="guessMemoryRestartButton" type="button">Noch mal spielen</button>
+    </div>
+
+    <button id="guessMemoryStartButton" class="guess-memory-start-button" type="button">Spiel starten</button>
+  </div>
+</section>
+
 <section>
   <h2>Galerie Upload ☁️</h2>
   <p>Monatsordner direkt in Firebase Storage hochladen.</p>
   <button onclick="openUpload()">Upload öffnen</button>
 </section>
 
+<div id="mediaLightbox" class="media-lightbox hidden" role="dialog" aria-modal="true" aria-labelledby="mediaLightboxCaption">
+  <div class="media-lightbox-panel">
+    <button class="media-lightbox-close" type="button" onclick="closeMediaLightbox()" aria-label="Ansicht schließen">✕</button>
+    <div id="mediaLightboxContent" class="media-lightbox-content"></div>
+    <p id="mediaLightboxCaption" class="media-lightbox-caption"></p>
+    <div class="media-lightbox-actions">
+      <button id="renameGalleryItemBtn" class="media-lightbox-rename hidden" type="button" onclick="renameActiveGalleryItem()">Namen ändern</button>
+      <button id="deleteGalleryItemBtn" class="media-lightbox-delete hidden" type="button" onclick="deleteActiveGalleryItem()">Datei löschen</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/gallery-data.js"></script>
 <script src="js/script.js"></script>
 
 <!-- Event Popup -->

@@ -16,6 +16,8 @@ const ANNIVERSARY_SPECIAL_STORAGE_KEY = "yearSpecial365AutoShown";
 const ANNIVERSARY_SPECIAL_TYPING_DELAY_MS = 28;
 const ANNIVERSARY_SPECIAL_SLIDE_INTERVAL_MS = 4200;
 const ANNIVERSARY_SPECIAL_STORY_TEXT = "365 Tage. Ein ganzes Jahr voller erster Male und Erinnerungen, die nur uns gehören. Das hier ist eine kleine Zusammenfassung für unser erstes gemeinsames Jahr.";
+const GUESS_MEMORY_MAX_ROUNDS = 5;
+const GUESS_MEMORY_OPTION_COUNT = 4;
 
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"];
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov", ".m4v"];
@@ -36,6 +38,7 @@ let pageFeaturesInitialized = false;
 let galleryMonths = [];
 let galleryItemsCache = {};
 let gallerySource = "storage";
+let gallerySourceSnapshot = null;
 let gallerySortMode = "newest";
 let galleryEmptyStateTitle = "Noch keine Erinnerungen für diesen Monat";
 let galleryEmptyStateMessage = "Lade den Monatsordner in Firebase Storage hoch oder nutze für lokal gespeicherte Dateien das bestehende Galerie-Manifest als Fallback.";
@@ -57,6 +60,14 @@ let anniversarySpecialAutoPlayTimer = null;
 let anniversarySpecialAutoOpenTimer = null;
 let anniversarySpecialTextTimer = null;
 let anniversarySpecialLoadingPromise = null;
+let guessMemoryAvailableMonths = [];
+let guessMemoryPool = [];
+let guessMemoryRounds = [];
+let guessMemoryCurrentRoundIndex = 0;
+let guessMemoryCorrectAnswers = 0;
+let guessMemoryBusy = false;
+let guessMemoryLoadingPromise = null;
+let guessMemoryActiveItem = null;
 
 document.addEventListener("DOMContentLoaded", function() {
   initializePendingNavigationTargets();
@@ -1045,6 +1056,7 @@ function initializePageFeatures() {
   if (currentPage === "tools.html") {
     loadTodos();
     loadEvents();
+    initializeGuessMemoryGame();
 
     if (typeof window.initializeDateRoulette === "function") {
       window.initializeDateRoulette();
@@ -2340,6 +2352,93 @@ function getLatestKnownGalleryMonthId() {
   return fallbackMonths.length ? fallbackMonths[fallbackMonths.length - 1] : null;
 }
 
+function createEmptyGallerySourceSnapshot() {
+  return {
+    canUseManifest: false,
+    fallbackConfig: {
+      months: [],
+      items: {}
+    },
+    months: [],
+    source: "storage",
+    storageFailed: false,
+    error: null
+  };
+}
+
+async function resolveGallerySourceSnapshot() {
+  const canUseManifest = canUseHostedGalleryManifest();
+  const fallbackConfig = canUseManifest
+    ? getFallbackGalleryConfig()
+    : { months: [], items: {} };
+  const sourceSnapshot = {
+    canUseManifest: canUseManifest,
+    fallbackConfig: fallbackConfig,
+    months: [],
+    source: "storage",
+    storageFailed: false,
+    error: null
+  };
+
+  try {
+    const storageMonths = await getStorageGalleryMonths();
+
+    if (storageMonths.length && canUseManifest && fallbackConfig.months.length) {
+      sourceSnapshot.months = mergeGalleryMonths(storageMonths, fallbackConfig.months);
+      sourceSnapshot.source = "hybrid";
+    } else if (storageMonths.length) {
+      sourceSnapshot.months = storageMonths;
+      sourceSnapshot.source = "storage";
+    } else {
+      sourceSnapshot.months = fallbackConfig.months;
+      sourceSnapshot.source = fallbackConfig.months.length ? "manifest" : "storage";
+    }
+  } catch (error) {
+    sourceSnapshot.storageFailed = true;
+    sourceSnapshot.error = error;
+    sourceSnapshot.months = fallbackConfig.months;
+    sourceSnapshot.source = fallbackConfig.months.length ? "manifest" : "storage";
+  }
+
+  return sourceSnapshot;
+}
+
+async function loadResolvedGalleryItemsForMonth(monthId, sourceSnapshot) {
+  const resolvedSourceSnapshot = sourceSnapshot || createEmptyGallerySourceSnapshot();
+  const fallbackItems = resolvedSourceSnapshot.canUseManifest ? getFallbackGalleryItems(monthId) : [];
+
+  if (resolvedSourceSnapshot.source === "manifest") {
+    return {
+      items: fallbackItems,
+      source: fallbackItems.length ? "manifest" : resolvedSourceSnapshot.source,
+      error: null
+    };
+  }
+
+  try {
+    if (resolvedSourceSnapshot.source === "hybrid") {
+      const storageItems = await getStorageGalleryItems(monthId);
+      return {
+        items: mergeGalleryItems(storageItems, fallbackItems),
+        source: "hybrid",
+        error: null
+      };
+    }
+
+    return {
+      items: await getStorageGalleryItems(monthId),
+      source: "storage",
+      error: null
+    };
+  } catch (error) {
+    return {
+      items: fallbackItems,
+      source: fallbackItems.length ? "manifest" : resolvedSourceSnapshot.source,
+      error: error
+    };
+  }
+}
+
 function showGalleryLoading(message) {
   const galleryGrid = document.getElementById("galleryGrid");
   if (!galleryGrid) {
@@ -2525,10 +2624,6 @@ function initializeGallerySortControl() {
 async function initializeGalleryPage(preferredMonthId) {
   const monthTabs = document.getElementById("galleryMonthTabs");
   const galleryGrid = document.getElementById("galleryGrid");
-  const canUseManifest = canUseHostedGalleryManifest();
-  const fallbackConfig = canUseManifest
-    ? getFallbackGalleryConfig()
-    : { months: [], items: {} };
 
   if (!monthTabs || !galleryGrid) {
     return;
@@ -2537,9 +2632,10 @@ async function initializeGalleryPage(preferredMonthId) {
   galleryMonths = [];
   galleryItemsCache = {};
   gallerySource = "storage";
+  gallerySourceSnapshot = null;
   setGalleryEmptyStateContent(
     "Noch keine Erinnerungen für diesen Monat",
-    canUseManifest
+    canUseHostedGalleryManifest()
       ? "Lade den Monatsordner in Firebase Storage hoch oder nutze für lokal gespeicherte Dateien das bestehende Galerie-Manifest als Fallback."
       : "Online werden nur Dateien aus Firebase Storage angezeigt. Lokale assets/gallery-Dateien sind im Hosting absichtlich nicht verfügbar."
   );
@@ -2547,36 +2643,25 @@ async function initializeGalleryPage(preferredMonthId) {
   showGalleryLoading("Monate werden geladen...");
   showGalleryEmptyState(false);
 
-  try {
-    const storageMonths = await getStorageGalleryMonths();
-    if (storageMonths.length && canUseManifest && fallbackConfig.months.length) {
-      galleryMonths = mergeGalleryMonths(storageMonths, fallbackConfig.months);
-      gallerySource = "hybrid";
-    } else if (storageMonths.length) {
-      galleryMonths = storageMonths;
-      gallerySource = "storage";
-    } else {
-      galleryMonths = fallbackConfig.months;
-      gallerySource = fallbackConfig.months.length ? "manifest" : "storage";
+  gallerySourceSnapshot = await resolveGallerySourceSnapshot();
 
-      if (!galleryMonths.length && !canUseManifest) {
-        setGalleryEmptyStateContent(
-          "Online-Galerie noch leer",
-          "Es wurden noch keine Bilder oder Videos nach Firebase Storage hochgeladen. Öffne die Upload-Seite und lade die Monatsordner dort hoch."
-        );
-      }
-    }
-  } catch (error) {
-    console.error("Galerie aus Firebase Storage konnte nicht geladen werden:", error);
-    galleryMonths = fallbackConfig.months;
-    gallerySource = fallbackConfig.months.length ? "manifest" : "storage";
+  if (gallerySourceSnapshot.error) {
+    console.error("Galerie aus Firebase Storage konnte nicht geladen werden:", gallerySourceSnapshot.error);
+  }
 
-    if (!canUseManifest) {
-      setGalleryEmptyStateContent(
-        "Firebase Storage konnte nicht geladen werden",
-        "Die Online-Galerie konnte nicht aus Firebase Storage gelesen werden. Bitte prüfe Login, Storage Rules und ob der Bucket korrekt eingerichtet ist."
-      );
-    }
+  galleryMonths = gallerySourceSnapshot.months;
+  gallerySource = gallerySourceSnapshot.source;
+
+  if (gallerySourceSnapshot.storageFailed && !gallerySourceSnapshot.canUseManifest) {
+    setGalleryEmptyStateContent(
+      "Firebase Storage konnte nicht geladen werden",
+      "Die Online-Galerie konnte nicht aus Firebase Storage gelesen werden. Bitte prüfe Login, Storage Rules und ob der Bucket korrekt eingerichtet ist."
+    );
+  } else if (!galleryMonths.length && !gallerySourceSnapshot.canUseManifest) {
+    setGalleryEmptyStateContent(
+      "Online-Galerie noch leer",
+      "Es wurden noch keine Bilder oder Videos nach Firebase Storage hochgeladen. Öffne die Upload-Seite und lade die Monatsordner dort hoch."
+    );
   }
 
   initializeGallerySortControl();
@@ -2637,24 +2722,17 @@ async function renderGalleryItems(monthId) {
 
   showGalleryLoading("Erinnerungen werden geladen...");
 
-  let items = [];
-  const fallbackItems = canUseHostedGalleryManifest() ? getFallbackGalleryItems(monthId) : [];
+  if (!gallerySourceSnapshot) {
+    gallerySourceSnapshot = await resolveGallerySourceSnapshot();
+  }
 
-  try {
-    if (gallerySource === "storage") {
-      items = await getStorageGalleryItems(monthId);
-    } else if (gallerySource === "hybrid") {
-      const storageItems = await getStorageGalleryItems(monthId);
-      items = mergeGalleryItems(storageItems, fallbackItems);
-    } else {
-      items = fallbackItems;
-    }
-  } catch (error) {
-    console.error("Fehler beim Laden der Galerie-Dateien:", error);
-    items = fallbackItems;
-    if (items.length) {
-      gallerySource = "manifest";
-    } else if (!canUseHostedGalleryManifest()) {
+  const loadResult = await loadResolvedGalleryItemsForMonth(monthId, gallerySourceSnapshot);
+  let items = loadResult.items;
+  gallerySource = loadResult.source;
+
+  if (loadResult.error) {
+    console.error("Fehler beim Laden der Galerie-Dateien:", loadResult.error);
+    if (!items.length && !gallerySourceSnapshot.canUseManifest) {
       setGalleryEmptyStateContent(
         "Dateien konnten nicht geladen werden",
         "Die Medien dieses Monats konnten nicht aus Firebase Storage geladen werden. Bitte prüfe, ob die Dateien dort hochgeladen wurden und ob dein Konto Zugriff hat."
@@ -2823,6 +2901,484 @@ function showGalleryEmptyState(isEmpty) {
   emptyState.classList.toggle("hidden", !isEmpty);
 }
 
+function getGuessMemoryElements() {
+  return {
+    status: document.getElementById("guessMemoryStatus"),
+    progress: document.getElementById("guessMemoryProgress"),
+    score: document.getElementById("guessMemoryScore"),
+    stage: document.getElementById("guessMemoryStage"),
+    image: document.getElementById("guessMemoryImage"),
+    options: document.getElementById("guessMemoryOptions"),
+    feedback: document.getElementById("guessMemoryFeedback"),
+    feedbackKicker: document.getElementById("guessMemoryFeedbackKicker"),
+    feedbackTitle: document.getElementById("guessMemoryFeedbackTitle"),
+    feedbackText: document.getElementById("guessMemoryFeedbackText"),
+    finish: document.getElementById("guessMemoryFinish"),
+    finishTitle: document.getElementById("guessMemoryFinishTitle"),
+    finishText: document.getElementById("guessMemoryFinishText"),
+    startButton: document.getElementById("guessMemoryStartButton"),
+    nextButton: document.getElementById("guessMemoryNextButton"),
+    restartButton: document.getElementById("guessMemoryRestartButton"),
+    viewButton: document.getElementById("guessMemoryViewButton")
+  };
+}
+
+function setGuessMemoryStatus(text, tone) {
+  const status = document.getElementById("guessMemoryStatus");
+  if (!status) {
+    return;
+  }
+
+  status.textContent = text;
+  status.dataset.tone = tone || "default";
+}
+
+function updateGuessMemoryScoreboard() {
+  const elements = getGuessMemoryElements();
+  if (elements.progress) {
+    elements.progress.textContent = guessMemoryRounds.length
+      ? `Runde ${Math.min(guessMemoryCurrentRoundIndex + 1, guessMemoryRounds.length)} von ${guessMemoryRounds.length}`
+      : "Noch nicht gestartet";
+  }
+
+  if (elements.score) {
+    elements.score.textContent = guessMemoryRounds.length
+      ? `${guessMemoryCorrectAnswers} von ${guessMemoryRounds.length} richtig`
+      : "0 richtig";
+  }
+}
+
+function setGuessMemoryStartButtonState(disabled, label) {
+  const startButton = document.getElementById("guessMemoryStartButton");
+  if (!startButton) {
+    return;
+  }
+
+  startButton.disabled = disabled;
+  if (label) {
+    startButton.textContent = label;
+  }
+}
+
+function shuffleArray(items) {
+  const shuffledItems = items.slice();
+
+  for (let index = shuffledItems.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    const currentValue = shuffledItems[index];
+    shuffledItems[index] = shuffledItems[swapIndex];
+    shuffledItems[swapIndex] = currentValue;
+  }
+
+  return shuffledItems;
+}
+
+function getGuessMemoryFinishCopy(score, totalRounds) {
+  const ratio = totalRounds ? score / totalRounds : 0;
+
+  if (ratio >= 0.8) {
+    return {
+      title: "Das war stark",
+      text: `Du hast ${score} von ${totalRounds} Erinnerungen richtig zugeordnet.`
+    };
+  }
+
+  if (ratio >= 0.5) {
+    return {
+      title: "Gar nicht schlecht",
+      text: `Du hast ${score} von ${totalRounds} Erinnerungen richtig geraten.`
+    };
+  }
+
+  return {
+    title: "Zeit für eine kleine Auffrischung",
+    text: `Du hast ${score} von ${totalRounds} Erinnerungen getroffen. Noch eine Runde hilft.`
+  };
+}
+
+async function ensureGuessMemoryPool() {
+  if (guessMemoryAvailableMonths.length >= GUESS_MEMORY_OPTION_COUNT && guessMemoryPool.length) {
+    return true;
+  }
+
+  if (guessMemoryLoadingPromise) {
+    return guessMemoryLoadingPromise;
+  }
+
+  guessMemoryLoadingPromise = (async function() {
+    const sourceSnapshot = await resolveGallerySourceSnapshot();
+    const playableMonths = [];
+
+    if (sourceSnapshot.error) {
+      console.error("Guess the Memory konnte die Galeriequellen nicht vollständig laden:", sourceSnapshot.error);
+    }
+
+    for (const month of sourceSnapshot.months) {
+      const loadResult = await loadResolvedGalleryItemsForMonth(month.id, sourceSnapshot);
+
+      if (loadResult.error && !loadResult.items.length) {
+        console.warn(`Guess the Memory hat für ${month.id} keine Medien laden können.`, loadResult.error);
+      }
+
+      const monthLabel = month.label || formatMonthLabel(month.id);
+      const imageItems = sortGalleryItems(loadResult.items)
+        .filter(function(item) {
+          return item.type === "image" && Boolean(item.src);
+        })
+        .map(function(item) {
+          return Object.assign({}, item, {
+            monthId: month.id,
+            monthLabel: monthLabel
+          });
+        });
+
+      if (imageItems.length) {
+        playableMonths.push({
+          id: month.id,
+          label: monthLabel,
+          items: imageItems
+        });
+      }
+    }
+
+    guessMemoryAvailableMonths = playableMonths.map(function(month) {
+      return {
+        id: month.id,
+        label: month.label
+      };
+    });
+    guessMemoryPool = playableMonths.flatMap(function(month) {
+      return month.items;
+    });
+
+    return guessMemoryAvailableMonths.length >= GUESS_MEMORY_OPTION_COUNT && guessMemoryPool.length > 0;
+  })().finally(function() {
+    guessMemoryLoadingPromise = null;
+  });
+
+  return guessMemoryLoadingPromise;
+}
+
+function buildGuessMemoryRounds() {
+  const roundLimit = Math.min(GUESS_MEMORY_MAX_ROUNDS, guessMemoryPool.length);
+  const shuffledPool = shuffleArray(guessMemoryPool);
+  const rounds = [];
+
+  shuffledPool.forEach(function(item) {
+    if (rounds.length >= roundLimit) {
+      return;
+    }
+
+    const wrongMonths = shuffleArray(guessMemoryAvailableMonths.filter(function(month) {
+      return month.id !== item.monthId;
+    })).slice(0, GUESS_MEMORY_OPTION_COUNT - 1);
+
+    if (wrongMonths.length < GUESS_MEMORY_OPTION_COUNT - 1) {
+      return;
+    }
+
+    const options = shuffleArray([
+      {
+        id: item.monthId,
+        label: item.monthLabel
+      }
+    ].concat(wrongMonths.map(function(month) {
+      return {
+        id: month.id,
+        label: month.label
+      };
+    })));
+
+    rounds.push({
+      item: item,
+      correctMonthId: item.monthId,
+      correctMonthLabel: item.monthLabel,
+      options: options
+    });
+  });
+
+  return rounds;
+}
+
+function renderGuessMemoryOptions(round) {
+  const optionsContainer = document.getElementById("guessMemoryOptions");
+  if (!optionsContainer) {
+    return;
+  }
+
+  optionsContainer.innerHTML = "";
+
+  round.options.forEach(function(option) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "guess-memory-option";
+    button.dataset.monthId = option.id;
+    button.textContent = option.label;
+    button.addEventListener("click", function() {
+      revealGuessMemoryAnswer(option.id);
+    });
+    optionsContainer.appendChild(button);
+  });
+}
+
+function renderGuessMemoryRound() {
+  const elements = getGuessMemoryElements();
+  const round = guessMemoryRounds[guessMemoryCurrentRoundIndex];
+
+  if (!round || !elements.stage || !elements.image) {
+    showGuessMemoryFinish();
+    return;
+  }
+
+  guessMemoryBusy = false;
+  guessMemoryActiveItem = round.item;
+  updateGuessMemoryScoreboard();
+  elements.stage.classList.remove("hidden");
+
+  if (elements.feedback) {
+    elements.feedback.classList.add("hidden");
+  }
+
+  if (elements.finish) {
+    elements.finish.classList.add("hidden");
+  }
+
+  if (elements.startButton) {
+    elements.startButton.classList.add("hidden");
+  }
+
+  if (elements.viewButton) {
+    elements.viewButton.classList.add("hidden");
+  }
+
+  elements.image.src = round.item.src;
+  elements.image.alt = round.item.alt || round.item.caption || "Erinnerung";
+  renderGuessMemoryOptions(round);
+  setGuessMemoryStatus("Welcher Monat passt zu diesem Foto?", "default");
+}
+
+function revealGuessMemoryAnswer(selectedMonthId) {
+  if (guessMemoryBusy) {
+    return;
+  }
+
+  const round = guessMemoryRounds[guessMemoryCurrentRoundIndex];
+  const elements = getGuessMemoryElements();
+  const optionButtons = elements.options
+    ? Array.from(elements.options.querySelectorAll(".guess-memory-option"))
+    : [];
+
+  if (!round || !optionButtons.length) {
+    return;
+  }
+
+  guessMemoryBusy = true;
+
+  const isCorrect = selectedMonthId === round.correctMonthId;
+  if (isCorrect) {
+    guessMemoryCorrectAnswers += 1;
+  }
+
+  optionButtons.forEach(function(button) {
+    const isCorrectOption = button.dataset.monthId === round.correctMonthId;
+    const isSelectedOption = button.dataset.monthId === selectedMonthId;
+
+    button.disabled = true;
+
+    if (isCorrectOption) {
+      button.classList.add("is-correct");
+    } else if (isSelectedOption) {
+      button.classList.add("is-wrong");
+    } else {
+      button.classList.add("is-muted");
+    }
+  });
+
+  updateGuessMemoryScoreboard();
+
+  if (elements.feedback) {
+    elements.feedback.classList.remove("hidden");
+  }
+
+  if (elements.feedbackKicker) {
+    elements.feedbackKicker.textContent = isCorrect ? "Richtig" : "Nicht ganz";
+  }
+
+  if (elements.feedbackTitle) {
+    elements.feedbackTitle.textContent = isCorrect
+      ? `${round.correctMonthLabel} war richtig`
+      : `Das Foto gehört zu ${round.correctMonthLabel}`;
+  }
+
+  if (elements.feedbackText) {
+    elements.feedbackText.textContent = round.item.caption
+      ? `Bildtitel: ${round.item.caption}`
+      : "Jetzt kennst du den richtigen Monat dieser Erinnerung.";
+  }
+
+  if (elements.viewButton) {
+    elements.viewButton.classList.remove("hidden");
+  }
+
+  if (elements.nextButton) {
+    elements.nextButton.textContent = guessMemoryCurrentRoundIndex >= guessMemoryRounds.length - 1
+      ? "Ergebnis ansehen"
+      : "Nächste Runde";
+  }
+
+  setGuessMemoryStatus(
+    isCorrect
+      ? `Sehr gut. ${round.correctMonthLabel} war die richtige Antwort.`
+      : `Richtige Antwort: ${round.correctMonthLabel}.`,
+    isCorrect ? "success" : "warning"
+  );
+}
+
+function showGuessMemoryFinish() {
+  const elements = getGuessMemoryElements();
+  const finishCopy = getGuessMemoryFinishCopy(guessMemoryCorrectAnswers, guessMemoryRounds.length);
+
+  guessMemoryBusy = false;
+
+  if (elements.stage) {
+    elements.stage.classList.add("hidden");
+  }
+
+  if (elements.feedback) {
+    elements.feedback.classList.add("hidden");
+  }
+
+  if (elements.finish) {
+    elements.finish.classList.remove("hidden");
+  }
+
+  if (elements.finishTitle) {
+    elements.finishTitle.textContent = finishCopy.title;
+  }
+
+  if (elements.finishText) {
+    elements.finishText.textContent = finishCopy.text;
+  }
+
+  if (elements.progress) {
+    elements.progress.textContent = "Fertig";
+  }
+
+  if (elements.score) {
+    elements.score.textContent = `${guessMemoryCorrectAnswers} von ${guessMemoryRounds.length} richtig`;
+  }
+
+  setGuessMemoryStatus("Die Bilder bleiben für die nächste Runde geladen.", "default");
+}
+
+function goToNextGuessMemoryRound() {
+  if (!guessMemoryRounds.length) {
+    return;
+  }
+
+  guessMemoryCurrentRoundIndex += 1;
+
+  if (guessMemoryCurrentRoundIndex >= guessMemoryRounds.length) {
+    showGuessMemoryFinish();
+    return;
+  }
+
+  renderGuessMemoryRound();
+}
+
+function startGuessMemorySession() {
+  const elements = getGuessMemoryElements();
+
+  guessMemoryRounds = buildGuessMemoryRounds();
+  guessMemoryCurrentRoundIndex = 0;
+  guessMemoryCorrectAnswers = 0;
+  guessMemoryBusy = false;
+  guessMemoryActiveItem = null;
+
+  if (!guessMemoryRounds.length) {
+    setGuessMemoryStatus("Für dieses Spiel brauchen wir mindestens vier Monate mit Fotos.", "error");
+
+    if (elements.finish) {
+      elements.finish.classList.add("hidden");
+    }
+
+    if (elements.feedback) {
+      elements.feedback.classList.add("hidden");
+    }
+
+    if (elements.stage) {
+      elements.stage.classList.add("hidden");
+    }
+
+    if (elements.startButton) {
+      elements.startButton.classList.remove("hidden");
+    }
+
+    updateGuessMemoryScoreboard();
+    return;
+  }
+
+  renderGuessMemoryRound();
+}
+
+async function startGuessMemoryGame() {
+  setGuessMemoryStartButtonState(true, "Erinnerungen werden geladen...");
+  setGuessMemoryStatus("Ich baue gerade den Bilder-Pool für Guess the Memory auf.", "loading");
+
+  const hasEnoughImages = await ensureGuessMemoryPool();
+
+  setGuessMemoryStartButtonState(false, "Spiel starten");
+
+  if (!hasEnoughImages) {
+    setGuessMemoryStatus("Für Guess the Memory brauchen wir mindestens vier Monate mit Fotos.", "error");
+    return;
+  }
+
+  startGuessMemorySession();
+}
+
+function initializeGuessMemoryGame() {
+  const currentPage = getCurrentPageName();
+  const elements = getGuessMemoryElements();
+
+  if (currentPage !== "tools.html" || !elements.startButton) {
+    return;
+  }
+
+  updateGuessMemoryScoreboard();
+  setGuessMemoryStatus("Die Bilder werden erst geladen, wenn du das Spiel startest.", "default");
+
+  if (elements.startButton.dataset.bound !== "true") {
+    elements.startButton.dataset.bound = "true";
+    elements.startButton.addEventListener("click", function() {
+      startGuessMemoryGame();
+    });
+  }
+
+  if (elements.nextButton && elements.nextButton.dataset.bound !== "true") {
+    elements.nextButton.dataset.bound = "true";
+    elements.nextButton.addEventListener("click", function() {
+      goToNextGuessMemoryRound();
+    });
+  }
+
+  if (elements.restartButton && elements.restartButton.dataset.bound !== "true") {
+    elements.restartButton.dataset.bound = "true";
+    elements.restartButton.addEventListener("click", function() {
+      startGuessMemorySession();
+    });
+  }
+
+  if (elements.viewButton && elements.viewButton.dataset.bound !== "true") {
+    elements.viewButton.dataset.bound = "true";
+    elements.viewButton.addEventListener("click", function() {
+      if (guessMemoryActiveItem) {
+        openMediaLightbox(guessMemoryActiveItem);
+      }
+    });
+  }
+}
+
 function initializeMediaLightbox() {
   const lightbox = document.getElementById("mediaLightbox");
   if (!lightbox || lightbox.dataset.bound === "true") {
@@ -2847,7 +3403,7 @@ function initializeMediaLightbox() {
 function updateLightboxActionButtons(item, busyAction) {
   const renameBtn = document.getElementById("renameGalleryItemBtn");
   const deleteBtn = document.getElementById("deleteGalleryItemBtn");
-  const canModify = Boolean(item && item.storagePath && storageRefFactory);
+  const canModify = getCurrentPageName() === "gallery.html" && Boolean(item && item.storagePath && storageRefFactory);
   const isRenameBusy = busyAction === "rename";
   const isDeleteBusy = busyAction === "delete";
 
